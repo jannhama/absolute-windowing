@@ -1,0 +1,42 @@
+/* src/windowing/styles/tokens.css */
+.aw-wm-root {
+    /* surfaces */
+    --aw-wm-font-family:  Helvetica, Arial, Sans-Serif;
+    --aw-wm-window-font-color: #fff;
+    --aw-wm-bg: #0e0f12;
+    --aw-wm-window-bg: rgba(25, 27, 33, 0.98);
+    --aw-wm-border: rgba(255, 255, 255, 0.12);
+    --aw-wm-border-active: rgba(255, 255, 255, 0.24);
+
+    /* text */
+    --aw-wm-title-text: rgba(255, 255, 255, 0.90);
+    --aw-wm-muted-text: rgba(255, 255, 255, 0.70);
+
+    /* titlebar */
+    --aw-wm-titlebar-h: 28px;
+    --aw-wm-titlebar-bg: rgba(255, 255, 255, 0.02);
+    --aw-wm-titlebar-active-bg: rgba(255, 255, 255, 0.1);
+    --aw-wm-titlebar-border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    /* controls */
+    --aw-wm-btn-bg: rgba(255, 255, 255, 0.06);
+    --aw-wm-btn-bg-hover: rgba(255, 255, 255, 0.10);
+    --aw-wm-btn-border: rgba(255, 255, 255, 0.10);
+    --aw-wm-btn-close-hover: rgba(255, 70, 70, 0.25);
+
+    /* shape & shadow */
+    --aw-wm-radius: 10px;
+    --aw-wm-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+
+    /* layout */
+    --aw-wm-titlebar-padding-x: 8px;
+    --aw-wm-controls-gap: 6px;
+    --aw-wm-content-padding: 0px;
+
+    /* resize handles */
+    --aw-wm-handle-edge: 6px;
+    --aw-wm-handle-corner: 12px;
+
+    /* snapping */
+    --aw-wm-snap-px: 8px;
+}

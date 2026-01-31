@@ -1,0 +1,46 @@
+{
+  "name": "absolute-windowing",
+  "version": "0.1.0",
+  "description": "Vue 3 windowing framework",
+  "license": "MIT",
+  "repository": "https://github.com/jannhama/absolute-windowing",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles/*": "./dist/styles/*"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "type-check": "vue-tsc --noEmit",
+    "build-types": "vue-tsc -p tsconfig.build.json",
+    "build-only": "vite build",
+    "build": "npm run type-check && npm run build-only && npm run build-types && npm run copy-styles",
+    "copy-styles": "node scripts/copyStyles.mjs",
+    "lint": "eslint . --fix --cache"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^8.54.0",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "eslint": "^9.39.2",
+    "eslint-plugin-vue": "~10.6.2",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.0",
+    "vue-tsc": "^3.2.1"
+  }
+}
