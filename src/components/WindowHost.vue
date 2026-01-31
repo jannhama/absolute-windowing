@@ -1,5 +1,17 @@
 <template>
-  <div ref="hostEl" class="aw-wm-host aw-wm-root" :data-aw-theme="options.theme">
+  <div
+    ref="hostEl"
+    class="aw-wm-host aw-wm-root"
+    :data-aw-theme="options.theme"
+    tabindex="0"
+    @mousedown="onHostMouseDown"
+  >
+    <div
+      v-if="modalBackdropVisible"
+      class="aw-wm-backdrop"
+      :style="{ zIndex: modalBackdropZIndex }"
+      @mousedown.stop.prevent="onBackdropMouseDown"
+    ></div>
     <WindowShell
       v-for="(win, index) in windows"
       :key="win.id"
@@ -16,6 +28,7 @@
       @guides="onGuides"
       :options="options"
     />
+
     <div
       v-if="showGuideX"
       class="aw-wm-guide aw-wm-guide-x"
@@ -30,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import WindowShell from './WindowShell.vue';
 import type {
   AwWindowManager,
@@ -76,6 +89,18 @@ const hostEl = ref<HTMLDivElement | null>(null);
 const windows = computed(() => {
   return props.windowManager.getWindows();
 });
+
+/*
+const modalBackdropZIndex = computed(() => {
+  return windows.value.findIndex((w) => w.layer === 'modal');
+});
+*/
+
+/*
+const modalBackdropVisible = computed(() => {
+  return windows.value.some((w) => w.layer === 'modal');
+});
+*/
 
 const getBounds = (): Bounds => {
   const el = hostEl.value;
@@ -138,6 +163,151 @@ const getSnapTargets = (id: AwWindowId): AwWindowRect[] => {
     .filter((w) => w.id !== id && w.state !== 'closed')
     .map((w) => getVisibleRect(w));
 };
+
+// -------------------------
+// Keyboard routing
+// -------------------------
+
+const onHostMouseDown = (): void => {
+  const el = hostEl.value;
+  if (!el) {
+    return;
+  }
+  el.focus();
+};
+
+const isTextInputTarget = (target: EventTarget | null): boolean => {
+  if (!target || !(target instanceof Element)) {
+    return false;
+  }
+
+  if (target.closest('input, textarea, select, [contenteditable="true"]')) {
+    return true;
+  }
+
+  return false;
+};
+
+const getActiveModalWindow = (): AwWindowModel | null => {
+  const win = windows.value.find((w) => w.isActive && w.layer === 'modal' && w.state !== 'closed');
+  return win ?? null;
+};
+
+const getActiveWindow = (): AwWindowModel | null => {
+  const win = windows.value.find((w) => w.isActive && w.state !== 'closed');
+  return win ?? null;
+};
+
+const deliverKey = (win: AwWindowModel, event: KeyboardEvent): boolean => {
+  if (event.type === 'keydown') {
+    if (!win.onKeyDown) {
+      return false;
+    }
+    return win.onKeyDown(event);
+  }
+
+  if (event.type === 'keyup') {
+    if (!win.onKeyUp) {
+      return false;
+    }
+    return win.onKeyUp(event);
+  }
+
+  return false;
+};
+
+const onHostKeyEvent = (event: KeyboardEvent): void => {
+  if (isTextInputTarget(event.target)) {
+    return;
+  }
+
+  const modal = getActiveModalWindow();
+  if (modal) {
+    const handled = deliverKey(modal, event);
+    event.stopPropagation();
+    if (handled) {
+      event.preventDefault();
+    }
+    return;
+  }
+
+  const active = getActiveWindow();
+  if (!active) {
+    return;
+  }
+
+  const handled = deliverKey(active, event);
+  if (!handled) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+};
+
+const getTopmostModalWindow = (): AwWindowModel | null => {
+  // windows are assumed to already be in render/z order
+  for (let i = windows.value.length - 1; i >= 0; i -= 1) {
+    const win = windows.value[i];
+    if (win.layer === 'modal' && win.state !== 'closed') {
+      return win;
+    }
+  }
+  return null;
+};
+
+const getFirstModalZIndex = (): number | null => {
+  for (let i = 0; i < windows.value.length; i += 1) {
+    const win = windows.value[i];
+    if (win.layer === 'modal' && win.state !== 'closed') {
+      return i + 1;
+    }
+  }
+  return null;
+};
+
+const modalBackdropVisible = computed((): boolean => {
+  return getFirstModalZIndex() !== null;
+});
+
+const modalBackdropZIndex = computed((): number => {
+  const firstModalZ = getFirstModalZIndex();
+  if (firstModalZ === null) {
+    return 0;
+  }
+  return Math.max(0, firstModalZ );
+});
+
+const onBackdropMouseDown = (): void => {
+  const el = hostEl.value;
+  if (el) {
+    el.focus();
+  }
+
+  const modal = getTopmostModalWindow();
+  if (modal) {
+    props.windowManager.activateWindow(modal.id);
+  }
+};
+onMounted((): void => {
+  const el = hostEl.value;
+  if (!el) {
+    return;
+  }
+
+  el.addEventListener('keydown', onHostKeyEvent);
+  el.addEventListener('keyup', onHostKeyEvent);
+});
+
+onBeforeUnmount((): void => {
+  const el = hostEl.value;
+  if (!el) {
+    return;
+  }
+
+  el.removeEventListener('keydown', onHostKeyEvent);
+  el.removeEventListener('keyup', onHostKeyEvent);
+});
 </script>
 
 <style scoped>
@@ -168,5 +338,15 @@ const getSnapTargets = (id: AwWindowId): AwWindowRect[] => {
   right: 0;
   height: 1px;
   background: rgba(0, 200, 255, 0.85);
+}
+
+.aw-wm-backdrop {
+  background: var(--aw-wm-backdrop-color);
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  inset: 0;
 }
 </style>

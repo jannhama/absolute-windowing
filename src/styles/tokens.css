@@ -39,4 +39,7 @@
 
     /* snapping */
     --aw-wm-snap-px: 8px;
+
+    /* backdrop */
+    --aw-wm-backdrop-color: rgba(0, 0, 0, 0.5);
 }
