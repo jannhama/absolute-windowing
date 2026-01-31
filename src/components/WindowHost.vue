@@ -9,7 +9,7 @@
     <div
       v-if="modalBackdropVisible"
       class="aw-wm-backdrop"
-      :style="{ zIndex: modalBackdropZIndex }"
+      :style="{ zIndex: backdropLayerIndex+1 }"
       @mousedown.stop.prevent="onBackdropMouseDown"
     ></div>
     <WindowShell
@@ -87,9 +87,12 @@ interface Bounds {
 const hostEl = ref<HTMLDivElement | null>(null);
 
 const windows = computed(() => {
-  return props.windowManager.getWindows();
+  return props.windowManager.getWindowsForRender();
 });
 
+const backdropLayerIndex = computed(()=>{
+  return props.windowManager.getLayerStartIndex('modal');
+})
 /*
 const modalBackdropZIndex = computed(() => {
   return windows.value.findIndex((w) => w.layer === 'modal');

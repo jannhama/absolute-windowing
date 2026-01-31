@@ -1,5 +1,5 @@
 // src/windowing/core/windowManager.ts
-import { reactive, computed, markRaw } from 'vue';
+import { reactive, markRaw } from 'vue';
 import type {
   AwCreateWindowInput,
   AwWindowFlags,
@@ -8,94 +8,128 @@ import type {
   AwWindowManager,
   AwWindowManagerHooks,
   AwWindowModel,
-  AwWindowRect,
+  AwWindowRect
 } from '../types';
 import { AW_DEFAULT_FLAGS, AW_DEFAULT_RECT } from '../constants';
 import { clamp, genId } from '../internal/utils';
 
+type Bands = {
+  normal: AwWindowModel[];
+  utility: AwWindowModel[];
+  overlay: AwWindowModel[];
+  modal: AwWindowModel[];
+  system: AwWindowModel[];
+};
 
+type BandKey = keyof Bands;
 
+const BAND_ORDER: BandKey[] = ['normal', 'utility', 'overlay', 'modal', 'system'];
+
+const getBandKey = (layer: AwWindowLayer): BandKey => {
+  if (layer === 'normal') {
+    return 'normal';
+  }
+  if (layer === 'utility') {
+    return 'utility';
+  }
+  if (layer === 'overlay') {
+    return 'overlay';
+  }
+  if (layer === 'modal') {
+    return 'modal';
+  }
+  return 'system';
+};
 
 export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowManager => {
   const state = reactive({
-    windows: [] as AwWindowModel[],
+    bands: {
+      normal: [] as AwWindowModel[],
+      utility: [] as AwWindowModel[],
+      overlay: [] as AwWindowModel[],
+      modal: [] as AwWindowModel[],
+      system: [] as AwWindowModel[]
+    } as Bands
   });
 
   const closingIds = new Set<AwWindowId>();
 
-  const layerPriority = (layer: AwWindowLayer): number => {
-    if (layer === 'normal') {
-      return 0;
-    }
-    if (layer === 'overlay') {
-      return 1;
-    }
-    return 2;
+  const getAllWindows = (): AwWindowModel[] => {
+    return BAND_ORDER.flatMap((key) => state.bands[key]);
   };
 
-  const getLayerRange = (layer: AwWindowLayer): { start: number; end: number } => {
-    const prio = layerPriority(layer);
-
-    let start = 0;
-    while (start < state.windows.length && layerPriority(state.windows[start].layer) < prio) {
-      start += 1;
-    }
-
-    let end = start;
-    while (end < state.windows.length && layerPriority(state.windows[end].layer) === prio) {
-      end += 1;
-    }
-
-    return { start, end };
+    const getWindowsForRender = (): readonly AwWindowModel[] => {
+    return getAllWindows();
   };
 
-  const moveIndex = (fromIndex: number, toIndex: number): void => {
-    if (fromIndex === toIndex) {
+
+  const getBand = (layer: AwWindowLayer): AwWindowModel[] => {
+    return state.bands[getBandKey(layer)];
+  };
+
+  const findWindowLocationById = (id: AwWindowId): { bandKey: BandKey; index: number; win: AwWindowModel } | null => {
+    for (const bandKey of BAND_ORDER) {
+      const band = state.bands[bandKey];
+      const index = band.findIndex((w) => w.id === id);
+      if (index >= 0) {
+        return { bandKey, index, win: band[index] };
+      }
+    }
+    return null;
+  };
+
+  const getWindowById = (id: AwWindowId): AwWindowModel | undefined => {
+    const loc = findWindowLocationById(id);
+    if (!loc) {
+      return undefined;
+    }
+    return loc.win;
+  };
+
+  const setActiveWindow = (id: AwWindowId | null): void => {
+    const all = getAllWindows();
+    all.forEach((win) => {
+      win.isActive = id ? win.id === id : false;
+    });
+  };
+
+  const getTopmostInBand = (bandKey: BandKey): AwWindowModel | null => {
+    const band = state.bands[bandKey];
+    for (let i = band.length - 1; i >= 0; i -= 1) {
+      const win = band[i];
+      if (win.state !== 'closed') {
+        return win;
+      }
+    }
+    return null;
+  };
+
+  const getTopmostModal = (): AwWindowModel | null => {
+    return getTopmostInBand('modal');
+  };
+
+  const bringToFrontWithinBand = (id: AwWindowId): void => {
+    const loc = findWindowLocationById(id);
+    if (!loc) {
       return;
     }
-    const item = state.windows[fromIndex];
-    state.windows.splice(fromIndex, 1);
 
-    const safeIndex = Math.max(0, Math.min(toIndex, state.windows.length));
-    state.windows.splice(safeIndex, 0, item);
-  };
-
-  const bringToFront = (id: AwWindowId): void => {
-    const fromIndex = state.windows.findIndex((win) => win.id === id);
-    if (fromIndex < 0) {
+    const band = state.bands[loc.bandKey];
+    if (loc.index < 0 || loc.index >= band.length) {
       return;
     }
 
-    const target = state.windows[fromIndex];
-    const range = getLayerRange(target.layer);
-
-    // After removal, indices may shift if we're moving forward in the array.
-    // We want the window to end up at the end of its layer section (top of that layer).
-    const toIndex = fromIndex < range.end ? range.end - 1 : range.end;
-
-    moveIndex(fromIndex, toIndex);
-
+    const item = band[loc.index];
+    band.splice(loc.index, 1);
+    band.push(item);
   };
-
-  const sendToBack = (id: AwWindowId): void => {
-    const fromIndex = state.windows.findIndex((win) => win.id === id);
-    if (fromIndex < 0) {
-      return;
-    }
-
-    const target = state.windows[fromIndex];
-    const range = getLayerRange(target.layer);
-
-    moveIndex(fromIndex, range.start);
-  };
-
-  const getWindowById = (id: AwWindowId): AwWindowModel | undefined =>
-    state.windows.find((w) => w.id === id);
-
 
   const activateWindow = (id: AwWindowId): void => {
     const target = getWindowById(id);
-    if (!target || target.isActive) {
+    if (!target) {
+      return;
+    }
+    if (target.isActive) {
       return;
     }
 
@@ -105,23 +139,13 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     }
 
     setActiveWindow(id);
-    bringToFront(id);
-  };
+    bringToFrontWithinBand(id);
 
-
-  const getTopmostModal = (): AwWindowModel | null => {
-    for (let i = state.windows.length - 1; i >= 0; i -= 1) {
-      const win = state.windows[i];
-      if (win.layer === 'modal') {
-        return win;
-      }
+    if (hooks.onWindowActivated) {
+      hooks.onWindowActivated(target);
     }
-    return null;
   };
 
-  const hasModalOpen = (): boolean => {
-    return getTopmostModal() !== null;
-  };
   const openWindow = (input: AwCreateWindowInput): AwWindowId => {
     const id = genId();
 
@@ -129,14 +153,14 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       x: input.rect?.x ?? AW_DEFAULT_RECT.x,
       y: input.rect?.y ?? AW_DEFAULT_RECT.y,
       w: input.rect?.w ?? AW_DEFAULT_RECT.w,
-      h: input.rect?.h ?? AW_DEFAULT_RECT.h,
+      h: input.rect?.h ?? AW_DEFAULT_RECT.h
     };
 
     const layer: AwWindowLayer = input.layer ?? 'normal';
 
     const flags: AwWindowFlags = {
       ...AW_DEFAULT_FLAGS,
-      ...(input.flags ?? {}),
+      ...(input.flags ?? {})
     };
 
     if (layer === 'modal') {
@@ -158,13 +182,13 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       flags,
       layer,
       meta: input.meta,
-      props: input.props ?? {},
+      props: input.props ?? {}
     };
 
     setActiveWindow(null);
 
-    const range = getLayerRange(layer);
-    state.windows.splice(range.end, 0, window);
+    const band = getBand(layer);
+    band.push(window);
 
     setActiveWindow(id);
 
@@ -175,10 +199,38 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     return id;
   };
 
+  const removeWindowById = (id: AwWindowId): AwWindowModel | null => {
+    const loc = findWindowLocationById(id);
+    if (!loc) {
+      return null;
+    }
 
-  const closeWindow = async (id: AwWindowId): Promise<void> => {
+    const band = state.bands[loc.bandKey];
+    const removed = band.splice(loc.index, 1);
+    if (removed.length !== 1) {
+      return null;
+    }
+    return removed[0];
+  };
+
+  const getTopmostOverall = (): AwWindowModel | null => {
+    const all = getAllWindows();
+    if (all.length === 0) {
+      return null;
+    }
+    return all[all.length - 1];
+  };
+
+  const getTopmostInLayer = (layer: AwWindowLayer): AwWindowModel | null => {
+    return getTopmostInBand(getBandKey(layer));
+  };
+
+  const closeWindowAsync = async (id: AwWindowId): Promise<void> => {
     const win = getWindowById(id);
-    if (!win || closingIds.has(id)) {
+    if (!win) {
+      return;
+    }
+    if (closingIds.has(id)) {
       return;
     }
 
@@ -196,54 +248,51 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       const wasActive = win.isActive;
       const closedLayer = win.layer;
 
-      const index = state.windows.findIndex((w) => w.id === id);
-      if (index < 0) {
+      const removed = removeWindowById(id);
+      if (!removed) {
         return;
       }
 
-      // Remove from stacking model
-      state.windows.splice(index, 1);
-
       if (hooks.onWindowClosed) {
-        hooks.onWindowClosed(win);
+        hooks.onWindowClosed(removed);
       }
 
       if (!wasActive) {
         return;
       }
 
-      if (state.windows.length === 0) {
+      const topmostModal = getTopmostModal();
+      if (topmostModal) {
+        setActiveWindow(topmostModal.id);
+        return;
+      }
+
+      const sameLayerTop = getTopmostInLayer(closedLayer);
+      if (sameLayerTop) {
+        setActiveWindow(sameLayerTop.id);
+        return;
+      }
+
+      const top = getTopmostOverall();
+      if (!top) {
         setActiveWindow(null);
         return;
       }
 
-      // Prefer topmost window in the same layer
-      let nextActiveId: AwWindowId | null = null;
-
-      for (let i = state.windows.length - 1; i >= 0; i -= 1) {
-        const candidate = state.windows[i];
-        if (candidate.layer === closedLayer) {
-          nextActiveId = candidate.id;
-          break;
-        }
-      }
-
-      // Fallback: topmost overall
-      if (!nextActiveId) {
-        nextActiveId = state.windows[state.windows.length - 1].id;
-      }
-
-      setActiveWindow(nextActiveId);
+      setActiveWindow(top.id);
     } finally {
       closingIds.delete(id);
     }
+  };
 
+  const closeWindow = (id: AwWindowId): void => {
+    void closeWindowAsync(id);
   };
 
   const moveWindow = (
     id: AwWindowId,
     next: { x: number; y: number },
-    bounds: { w: number; h: number },
+    bounds: { w: number; h: number }
   ): void => {
     const win = getWindowById(id);
     if (!win) {
@@ -268,6 +317,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
 
     win.rect.x = clamp(next.x, 0, maxX);
     win.rect.y = clamp(next.y, 0, maxY);
+
     if (hooks.onWindowMove) {
       hooks.onWindowMove(win);
     }
@@ -276,7 +326,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   const resizeWindow = (
     id: AwWindowId,
     next: { w: number; h: number },
-    bounds: { w: number; h: number },
+    bounds: { w: number; h: number }
   ): void => {
     const win = getWindowById(id);
     if (!win) {
@@ -303,6 +353,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
 
     win.rect.w = clamp(next.w, minW, maxW);
     win.rect.h = clamp(next.h, minH, maxH);
+
     if (hooks.onWindowResize) {
       hooks.onWindowResize(win);
     }
@@ -336,7 +387,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   const setWindowRect = (
     id: AwWindowId,
     rect: AwWindowRect,
-    bounds: { w: number; h: number },
+    bounds: { w: number; h: number }
   ): void => {
     const win = getWindowById(id);
     if (!win) {
@@ -381,40 +432,44 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   };
 
   const getState = (): { windows: AwWindowModel[] } => {
+    const all = getAllWindows();
     return {
-      windows: state.windows.map((win) => ({
+      windows: all.map((win) => ({
         ...win,
         rect: { ...win.rect },
-        prevRect: win.prevRect ? { ...win.prevRect } : undefined,
-      })),
+        prevRect: win.prevRect ? { ...win.prevRect } : undefined
+      }))
     };
   };
 
   const getWindows = (): AwWindowModel[] => {
     return getState().windows;
   };
-  const setActiveWindow = (id: AwWindowId | null) => {
-    state.windows.forEach((win) => {
-      win.isActive = id ? win.id === id : false;
-    });
-  };
 
-  const getNextActiveAfterClose = (closed: AwWindowModel): AwWindowModel | null => {
-    // Prefer topmost window in the same layer
-    for (let idx = state.windows.length - 1; idx >= 0; idx -= 1) {
-      const candidate = state.windows[idx];
-      if (candidate.layer === closed.layer) {
-        return candidate;
+  const getLayerStartIndex =(layer: AwWindowLayer) => {
+    const {normal,utility,overlay,modal,system} = state.bands;
+    switch(layer) {
+      case 'normal': {
+        return 0;
       }
+      case 'utility': {
+        return normal.length;
+      }
+      case 'overlay': {
+        return normal.length+utility.length;
+      }
+      case 'modal': {
+        return normal.length+utility.length+overlay.length;
+      }
+      case 'system': {
+        return normal.length+utility.length+overlay.length+modal.length;
+      }
+      
     }
-
-    // Otherwise, topmost overall
-    if (state.windows.length > 0) {
-      return state.windows[state.windows.length - 1];
-    }
-
-    return null;
-  };
+     // Exhaustiveness check – should never happen
+  const _exhaustive: never = layer;
+  return _exhaustive;
+  }
 
   return {
     openWindow,
@@ -428,6 +483,8 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     setWindowRect,
     getState,
     setActiveWindow,
-    getWindows
+    getWindows,
+    getWindowsForRender,
+    getLayerStartIndex
   };
 };
