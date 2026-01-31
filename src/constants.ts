@@ -1,4 +1,4 @@
-import type { AwOptions, AwWindowRect } from './types';
+import type { AwOptions, AwWindowFlags, AwWindowRect } from './types';
 
 export const AW_TITLEBAR_HEIGHT = 28;
 export const AW_EDGE_SNAP_PX = 8;
@@ -20,20 +20,21 @@ export const AW_DEFAULT_OPTIONS: AwOptions = {
   locked: false,
   minWidth: 320,
   minHeight: 240,
-  titleBarHeight: 24
 };
 
-export const AW_DEFAULT_FLAGS = {
-  movable: true,
+export const AW_DEFAULT_FLAGS: AwWindowFlags = {
   resizable: true,
+  movable: true,
   closable: true,
   minimizable: true,
-  maximizable: true
+  maximizable: true,
+  closeOnEsc: false,
+  closeOnBackdrop: false,
 };
 
-export const DEFAULT_RECT: AwWindowRect = {
+export const AW_DEFAULT_RECT: AwWindowRect = {
   x: 40,
   y: 40,
   w: 480,
-  h: 320
+  h: 320,
 };

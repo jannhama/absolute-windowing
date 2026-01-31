@@ -1,9 +1,10 @@
 <template>
-  <div class="aw-wm-host">
+  <div ref="hostEl" class="aw-wm-host aw-wm-root" :data-aw-theme="options.theme">
     <WindowShell
-      v-for="win in windows"
+      v-for="(win, index) in windows"
       :key="win.id"
       :win="win"
+      :zIndex="index + 1"
       :getBounds="getBounds"
       :getSnapTargets="getSnapTargets"
       @activate="onActivate"
@@ -41,18 +42,22 @@ import type {
 import { shallowRef } from 'vue';
 
 import { AW_DEFAULT_OPTIONS, AW_TITLEBAR_HEIGHT } from '../constants';
+import { readCssVarPx } from '../internal/utils';
 
 interface Props {
   windowManager: AwWindowManager;
-  options: AwOptions;
+  options?: Partial<AwOptions>;
 }
 
 const props = defineProps<Props>();
 
-const options = computed<AwOptions>(() => ({
-  ...AW_DEFAULT_OPTIONS,
-  ...props.options,
-}));
+const options = computed<AwOptions>(() => {
+  const options = {
+    ...AW_DEFAULT_OPTIONS,
+    ...(props.options ?? {}),
+  };
+  return options;
+});
 
 const snapGuides = shallowRef<{ x?: number; y?: number }>({});
 const guideOwner = shallowRef<AwWindowId | null>(null);
@@ -69,7 +74,7 @@ interface Bounds {
 const hostEl = ref<HTMLDivElement | null>(null);
 
 const windows = computed(() => {
-  return props.windowManager.windows;
+  return props.windowManager.getWindows();
 });
 
 const getBounds = (): Bounds => {
@@ -129,7 +134,7 @@ const getVisibleRect = (win: { rect: AwWindowRect; state: string }): AwWindowRec
 };
 
 const getSnapTargets = (id: AwWindowId): AwWindowRect[] => {
-  return props.windowManager.windows
+  return windows.value
     .filter((w) => w.id !== id && w.state !== 'closed')
     .map((w) => getVisibleRect(w));
 };

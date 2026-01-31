@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="shellEl"
     class="aw-wm-window"
     :class="{ 'is-active': win.isActive, 'is-minimized': win.state === 'minimized' }"
     :style="windowStyle"
@@ -46,7 +47,7 @@
     </div>
 
     <div v-if="win.state === 'open' || win.state === 'maximized'" class="aw-wm-content">
-      <component :is="win.component" />
+      <component :is="win.component" v-bind="win.props ?? {}" />
     </div>
 
     <ResizeHandles
@@ -57,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, ref } from 'vue';
 import ResizeHandles from './ResizeHandles.vue';
 import { AwBounds, AwDragSession, AwResizeDirection, AwDragMode } from '../internal/types';
 import { AwOptions, AwWindowId, AwWindowModel, AwWindowRect } from '../types';
@@ -70,12 +71,14 @@ import {
   snapRectToOtherRectsWithGuides,
 } from '../input/geometry';
 import { AW_DEFAULT_OPTIONS, AW_TITLEBAR_HEIGHT } from '../constants';
+import { readCssVarPx } from '../internal/utils';
 
-export interface Props {
+interface Props {
   win: AwWindowModel;
   options: AwOptions;
   getBounds: () => AwBounds;
   getSnapTargets: (id: AwWindowId) => AwWindowRect[];
+  zIndex: number;
 }
 
 const props = defineProps<Props>();
@@ -90,19 +93,44 @@ const emit = defineEmits<{
   (e: 'guides', payload: { id: AwWindowId; guides: { x?: number; y?: number } }): void;
 }>();
 
+const shellEl = ref<HTMLElement | null>(null);
+
+
+const titleBarHeightPx = computed(() => {
+  const el = shellEl.value;
+  if (!el) {
+    return AW_TITLEBAR_HEIGHT;
+  }
+
+  const host = (el.closest('.aw-wm-root') as HTMLElement | null) ?? el;
+  const px = readCssVarPx(host, '--aw-wm-titlebar-h');
+  return px > 0 ? px : AW_TITLEBAR_HEIGHT;
+});
+
+/*const getToken = (name: string): string => {
+  const el = shellEl.value;
+  if (!el) {
+    return '';
+  }
+
+  const host = el.closest('.aw-wm-root') as HTMLElement | null;
+  const styles = getComputedStyle(host ?? el);
+  return styles.getPropertyValue(name).trim();
+};*/
+
 const session = shallowRef<AwDragSession | null>(null);
 
 const windowStyle = computed<Record<string, string>>(() => {
   const { x, y, w, h } = props.win.rect;
-  const rootStyles = getComputedStyle(document.documentElement);
-  const titleBarHeight = rootStyles.getPropertyValue('--aw-wm-titlebar-h').trim();
+
+  const titleBarHeight = titleBarHeightPx.value;
   const height = props.win.state === 'minimized' ? `${titleBarHeight}px` : `${h}px`;
 
   return {
     transform: `translate(${x}px, ${y}px)`,
     width: `${w}px`,
     height,
-    zIndex: String(props.win.z),
+    zIndex: String(props.zIndex),
   };
 });
 
@@ -210,7 +238,7 @@ const onPointerMove = (e: PointerEvent): void => {
   if (ses.mode === 'move') {
     const effectiveSize =
       props.win.state === 'minimized'
-        ? { w: ses.startRect.w, h: props.options.titleBarHeight ?? AW_TITLEBAR_HEIGHT }
+        ? { w: ses.startRect.w, h: titleBarHeightPx.value }
         : undefined;
 
     let rect = moveRectWithinBounds({

@@ -10,15 +10,13 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles/*": "./dist/styles/*"
+    "./style.css": "./dist/absolute-windowing.css"
   },
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "sideEffects": [
-    "**/*.css"
-  ],
+  "sideEffects": ["*.css"],
   "peerDependencies": {
     "vue": "^3.3.0"
   },

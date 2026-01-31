@@ -11,36 +11,47 @@ export interface AwWindowRect {
 }
 
 export interface AwWindowFlags {
-  movable: boolean
-  resizable: boolean
-  closable: boolean
-  minimizable: boolean
-  maximizable: boolean
+  movable: boolean;
+  resizable: boolean;
+  closable: boolean;
+  minimizable: boolean;
+  maximizable: boolean;
+  closeOnEsc?: boolean;
+  closeOnBackdrop?: boolean;
 }
+
+export type AwWindowLayer = 'normal' | 'overlay' | 'modal';
 
 export interface AwWindowModel {
-  id: AwWindowId
-  title: string
-  component: AwVueComponent
-  state: AwWindowState
-  rect: AwWindowRect
-  prevRect?: AwWindowRect
-  z: number
-  isActive: boolean
-  flags: AwWindowFlags
-  meta?: unknown
+  id: AwWindowId;
+  title: string;
+  component: AwVueComponent;
+  state: AwWindowState;
+  rect: AwWindowRect;
+  prevRect?: AwWindowRect;
+  isActive: boolean;
+  flags: AwWindowFlags;
+  layer: AwWindowLayer;
+  props?: Record<string, unknown>;
+  meta?: unknown;
+  onKeyDown?: AwWindowKeyHandler;
+  onKeyUp?: AwWindowKeyHandler;
 }
+
+
 
 export interface AwCreateWindowInput {
-  title: string
-  component: AwVueComponent
-  rect?: Partial<AwWindowRect>
-  flags?: Partial<AwWindowFlags>
-  meta?: unknown
+  title: string;
+  component: AwVueComponent;
+  rect?: Partial<AwWindowRect>;
+  flags?: Partial<AwWindowFlags>;
+  layer?: AwWindowLayer;
+  props?: Record<string, unknown>;
+  meta?: unknown;
 }
 
+
 export interface AwWindowManager {
-  windows: AwWindowModel[]
   openWindow: (input: AwCreateWindowInput) => AwWindowId
   closeWindow: (id: AwWindowId) => void
   activateWindow: (id: AwWindowId) => void
@@ -58,7 +69,8 @@ export interface AwWindowManager {
   toggleMaximize: (id: AwWindowId, bounds: { w: number, h: number }) => void
   getWindowById: (id: AwWindowId) => AwWindowModel | undefined
   setWindowRect: (id: AwWindowId, rect: AwWindowRect, bounds: { w: number, h: number }) => void
-  getState: () => { windows: AwWindowModel[], zCounter: number }
+  getState: () => { windows: AwWindowModel[] }
+  getWindows: () => AwWindowModel[]
   setActiveWindow: (id: AwWindowId | null) => void
 }
 
@@ -86,5 +98,7 @@ export interface AwOptions {
   locked: boolean
   minWidth: number
   minHeight: number
-  titleBarHeight: number
-}
+ }
+
+export type AwWindowKeyHandler = (event: KeyboardEvent) => boolean;
+
