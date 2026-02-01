@@ -30,6 +30,7 @@ export const AW_DEFAULT_FLAGS: AwWindowFlags = {
   maximizable: true,
   closeOnEsc: false,
   closeOnBackdrop: false,
+  isBlockingWindow: false
 };
 
 export const AW_DEFAULT_RECT: AwWindowRect = {

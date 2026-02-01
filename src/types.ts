@@ -21,12 +21,7 @@ export interface AwWindowFlags {
   isBlockingWindow?: boolean;
 }
 
-export type AwWindowLayer =
-  | 'normal'
-  | 'utility'
-  | 'overlay'
-  | 'modal'
-  | 'system';
+export type AwWindowLayer = 'normal' | 'utility' | 'overlay' | 'modal' | 'system';
 
 export interface AwWindowModel {
   id: AwWindowId;
@@ -35,7 +30,6 @@ export interface AwWindowModel {
   state: AwWindowState;
   rect: AwWindowRect;
   prevRect?: AwWindowRect;
-  isActive: boolean;
   flags: AwWindowFlags;
   layer: AwWindowLayer;
   props?: Record<string, unknown>;
@@ -57,33 +51,22 @@ export interface AwCreateWindowInput {
 export interface AwWindowManager {
   openWindow: (input: AwCreateWindowInput) => AwWindowId;
   closeWindow: (id: AwWindowId) => void;
+  closeWindowAsync: (id: AwWindowId) => Promise<void>;
   activateWindow: (id: AwWindowId) => void;
-  moveWindow: (
-    id: AwWindowId,
-    next: { x: number; y: number },
-    bounds: { w: number; h: number },
-  ) => void;
-  resizeWindow: (
-    id: AwWindowId,
-    next: { w: number; h: number },
-    bounds: { w: number; h: number },
-  ) => void;
+  moveWindow: (id: AwWindowId, rect: AwWindowRect) => void;
+  resizeWindow: (id: AwWindowId, rect: AwWindowRect) => void;
   toggleMinimize: (id: AwWindowId) => void;
   toggleMaximize: (id: AwWindowId, bounds: { w: number; h: number }) => void;
   getWindowById: (id: AwWindowId) => AwWindowModel | undefined;
-  setWindowRect: (id: AwWindowId, rect: AwWindowRect, bounds: { w: number; h: number }) => void;
   getState: () => { windows: AwWindowModel[] };
   getWindows: () => AwWindowModel[];
   getWindowsForRender: () => readonly AwWindowModel[];
-  setActiveWindow: (id: AwWindowId | null) => void;
   getLayerStartIndex: (layer: AwWindowLayer) => number;
   getWindowsForLayer: (layer: AwWindowLayer) => readonly AwWindowModel[];
   getTopmostInLayer: (layer: AwWindowLayer) => AwWindowModel | null;
   getTopmostOverall: () => AwWindowModel | null;
-  closeWindowAsync: (id: AwWindowId) => Promise<void>;
   hasModalWindows: () => boolean;
 }
-
 
 export interface AwWindowManagerHooks {
   onWindowOpened?: (window: AwWindowModel) => void;

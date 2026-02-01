@@ -6,60 +6,11 @@
     tabindex="0"
     @mousedown="onHostMouseDown"
   >
-      <WindowShell
-        v-for="(win, index) in normalWindows"
-        :key="win.id"
-        :win="win"
-        :getBounds="getBounds"
-        :getSnapTargets="getSnapTargets"
-        @activate="onActivate"
-        @move="onMove"
-        @resize="onResize"
-        @close="onClose"
-        @minimize="onMinimize"
-        @maximize="onMaximize"
-        @guides="onGuides"
-        :options="options"
-      />
-      <WindowShell
-        v-for="(win, index) in utilityWindows"
-        :key="win.id"
-        :win="win"
-        :getBounds="getBounds"
-        :getSnapTargets="getSnapTargets"
-        @activate="onActivate"
-        @move="onMove"
-        @resize="onResize"
-        @close="onClose"
-        @minimize="onMinimize"
-        @maximize="onMaximize"
-        @guides="onGuides"
-        :options="options"
-      />
-      <WindowShell
-        v-for="(win, index) in overlayWindows"
-        :key="win.id"
-        :win="win"
-        :getBounds="getBounds"
-        :getSnapTargets="getSnapTargets"
-        @activate="onActivate"
-        @move="onMove"
-        @resize="onResize"
-        @close="onClose"
-        @minimize="onMinimize"
-        @maximize="onMaximize"
-        @guides="onGuides"
-        :options="options"
-      />
-    <div
-      v-if="modalBackdropVisible"
-      class="aw-wm-backdrop"
-      @mousedown.stop.prevent="onBackdropMouseDown"
-    ></div>
     <WindowShell
-      v-for="(win, index) in modalWindows"
+      v-for="(win, index) in normalWindows"
       :key="win.id"
       :win="win"
+      :isFocused="win.id === focusedId"
       :getBounds="getBounds"
       :getSnapTargets="getSnapTargets"
       @activate="onActivate"
@@ -71,15 +22,73 @@
       @guides="onGuides"
       :options="options"
     />
+    <WindowShell
+      v-for="(win, index) in utilityWindows"
+      :key="win.id"
+      :win="win"
+      :isFocused="win.id === focusedId"
+      :getBounds="getBounds"
+      :getSnapTargets="getSnapTargets"
+      @activate="onActivate"
+      @move="onMove"
+      @resize="onResize"
+      @close="onClose"
+      @minimize="onMinimize"
+      @maximize="onMaximize"
+      @guides="onGuides"
+      :options="options"
+    />
+    <WindowShell
+      v-for="(win, index) in overlayWindows"
+      :key="win.id"
+      :win="win"
+      :isFocused="win.id === focusedId"
+      :getBounds="getBounds"
+      :getSnapTargets="getSnapTargets"
+      @activate="onActivate"
+      @move="onMove"
+      @resize="onResize"
+      @close="onClose"
+      @minimize="onMinimize"
+      @maximize="onMaximize"
+      @guides="onGuides"
+      :options="options"
+    />
+
+    <div
+      v-if="modalBackdropVisible"
+      class="aw-wm-backdrop"
+      @mousedown.stop.prevent="onBackdropMouseDown"
+    ></div>
+
+    <WindowShell
+      v-for="(win, index) in modalWindows"
+      :key="win.id"
+      :win="win"
+      :isFocused="win.id === focusedId"
+      :getBounds="getBounds"
+      :getSnapTargets="getSnapTargets"
+      @activate="onActivate"
+      @move="onMove"
+      @resize="onResize"
+      @close="onClose"
+      @minimize="onMinimize"
+      @maximize="onMaximize"
+      @guides="onGuides"
+      :options="options"
+    />
+
     <div
       v-if="systemBackdropVisible"
       class="aw-wm-backdrop"
       @mousedown.stop.prevent="onSystemBackdropMouseDown"
     ></div>
+
     <WindowShell
       v-for="(win, index) in systemWindows"
       :key="win.id"
       :win="win"
+      :isFocused="win.id === focusedId"
       :getBounds="getBounds"
       :getSnapTargets="getSnapTargets"
       @activate="onActivate"
@@ -116,7 +125,6 @@ import type {
   AwWindowModel,
 } from '../types.ts';
 import { shallowRef } from 'vue';
-
 import { AW_DEFAULT_OPTIONS, AW_TITLEBAR_HEIGHT } from '../constants';
 
 interface Props {
@@ -160,27 +168,62 @@ const options = computed<AwOptions>(() => {
   };
   return options;
 });
+
 const snapGuides = shallowRef<{ x?: number; y?: number }>({});
 const guideOwner = shallowRef<AwWindowId | null>(null);
 
-const systemBackdropVisible = computed(() => {
-  if (systemWindows.value.length > 0) {
-    return systemWindows.value.some((win) => {
-      return win.flags.closeOnBackdrop || win.flags.closeOnEsc;
-    });
-  }
-  return false;
-});
+const isBlockingWindow = (win: AwWindowModel): boolean => {
+  return win.flags.isBlockingWindow === true;
+};
 
-const getBlockingOverlay = (): AwWindowModel | null => {
-  const blockingSystem = systemWindows.value.find(
-    (w) => w.flags.closeOnBackdrop || w.flags.closeOnEsc,
-  );
-  if (blockingSystem) {
-    return blockingSystem;
+const getTopmostBlockingSystemWindow = (): AwWindowModel | null => {
+  for (let i = systemWindows.value.length - 1; i >= 0; i -= 1) {
+    const win = systemWindows.value[i];
+    if (isBlockingWindow(win)) {
+      return win;
+    }
   }
+  return null;
+};
+const getTopmostSystemWindow = (): AwWindowModel | null => {
+  return systemWindows.value.at(-1) ?? null;
+};
+const getTopmostModalWindow = (): AwWindowModel | null => {
   return modalWindows.value.at(-1) ?? null;
 };
+
+const getTopmostNormalSideWindow = (): AwWindowModel | null => {
+  return (
+    overlayWindows.value.at(-1) ?? utilityWindows.value.at(-1) ?? normalWindows.value.at(-1) ?? null
+  );
+};
+
+const focusedId = computed<AwWindowId | null>(() => {
+  const blockingSystem = getTopmostBlockingSystemWindow();
+  if (blockingSystem) {
+    return blockingSystem.id;
+  }
+
+  const modal = getTopmostModalWindow();
+  if (modal) {
+    return modal.id;
+  }
+
+  const normalSide = getTopmostNormalSideWindow();
+  if (normalSide) {
+    return normalSide.id;
+  }
+
+  return null;
+});
+
+const systemBackdropVisible = computed((): boolean => {
+  return systemWindows.value.some((win) => win.flags.isBlockingWindow === true);
+});
+
+const modalBackdropVisible = computed((): boolean => {
+  return props.windowManager.hasModalWindows();
+});
 
 const getBounds = (): Bounds => {
   const el = hostEl.value;
@@ -224,11 +267,12 @@ const onMaximize = (payload: { id: AwWindowId; bounds: Bounds }): void => {
 };
 
 const onMove = (payload: { id: AwWindowId; rect: AwWindowRect; bounds: Bounds }) => {
-  props.windowManager.setWindowRect(payload.id, payload.rect, payload.bounds);
+  props.windowManager.moveWindow(payload.id, payload.rect);
 };
 
 const onResize = (payload: { id: AwWindowId; rect: AwWindowRect; bounds: Bounds }): void => {
-  props.windowManager.setWindowRect(payload.id, payload.rect, payload.bounds);
+  props.windowManager.resizeWindow(payload.id, payload.rect);
+
 };
 
 const getVisibleRect = (win: { rect: AwWindowRect; state: string }): AwWindowRect => {
@@ -268,16 +312,6 @@ const isTextInputTarget = (target: EventTarget | null): boolean => {
   return false;
 };
 
-const getActiveModalWindow = (): AwWindowModel | null => {
-  const win = modalWindows.value.find((w) => w.isActive && w.layer === 'modal');
-  return win ?? null;
-};
-
-const getActiveWindow = (): AwWindowModel | null => {
-  const win = windows.value.find((w) => w.isActive);
-  return win ?? null;
-};
-
 const deliverKey = (win: AwWindowModel, event: KeyboardEvent): boolean => {
   if (event.type === 'keydown') {
     if (!win.onKeyDown) {
@@ -296,18 +330,24 @@ const deliverKey = (win: AwWindowModel, event: KeyboardEvent): boolean => {
   return false;
 };
 
-const isBlockingSystemWindow = (win: AwWindowModel): boolean => {
-  return win.flags.closeOnBackdrop === true || win.flags.closeOnEsc === true;
+const onBackdropMouseDown = (): void => {
+  const el = hostEl.value;
+  if (el) {
+    el.focus();
+  }
+
+  const modal = getTopmostModalWindow();
+  if (modal) {
+    props.windowManager.activateWindow(modal.id);
+  }
 };
 
 const onHostKeyEvent = (event: KeyboardEvent): void => {
-  const system = props.windowManager.getTopmostInLayer('system');
-  const blockingSystem = system && isBlockingSystemWindow(system) ? system : null;
-
+  const blockingSystem = getTopmostBlockingSystemWindow();
   const modal = getTopmostModalWindow();
+  const system = systemWindows.value.at(-1) ?? null;
 
   if (blockingSystem) {
-    // Trap Tab so focus can't escape behind the system dialog.
     if (event.type === 'keydown' && event.key === 'Tab') {
       event.preventDefault();
       event.stopPropagation();
@@ -333,7 +373,6 @@ const onHostKeyEvent = (event: KeyboardEvent): void => {
   }
 
   if (modal) {
-    // Trap Tab so focus can't escape behind the modal.
     if (event.type === 'keydown' && event.key === 'Tab') {
       event.preventDefault();
       event.stopPropagation();
@@ -358,17 +397,16 @@ const onHostKeyEvent = (event: KeyboardEvent): void => {
     return;
   }
 
-  // No blocking overlay => keep your existing behavior (don't hijack typing in inputs).
   if (isTextInputTarget(event.target)) {
     return;
   }
 
-  const active = getActiveWindow();
-  if (!active) {
+  const normalSide = getTopmostNormalSideWindow();
+  if (!normalSide) {
     return;
   }
 
-  const handled = deliverKey(active, event);
+  const handled = deliverKey(normalSide, event);
   if (!handled) {
     return;
   }
@@ -377,48 +415,23 @@ const onHostKeyEvent = (event: KeyboardEvent): void => {
   event.stopPropagation();
 };
 
-const getTopmostModalWindow = (): AwWindowModel | null => {
-  // windows are assumed to already be in render/z order
-  for (let i = windows.value.length - 1; i >= 0; i -= 1) {
-    const win = windows.value[i];
-    if (win.layer === 'modal') {
-      return win;
-    }
-  }
-  return null;
-};
-
-const modalBackdropVisible = computed((): boolean => {
-  return props.windowManager.hasModalWindows();
-});
-
-const onBackdropMouseDown = (): void => {
-  const el = hostEl.value;
-  if (el) {
-    el.focus();
-  }
-
-  const modal = getTopmostModalWindow();
-  if (modal) {
-    props.windowManager.activateWindow(modal.id);
-  }
-};
 const onSystemBackdropMouseDown = (): void => {
-  console.log('System backdrop clicked');
   const el = hostEl.value;
   if (el) {
     el.focus();
   }
 
-  const system = props.windowManager.getTopmostInLayer('system');
+  const system = getTopmostBlockingSystemWindow() ?? systemWindows.value.at(-1) ?? null;
   if (!system) {
-    throw new Error('Expected system window to exist');
+    return;
   }
-  if (system.flags.closeOnBackdrop === false) {
-    props.windowManager.activateWindow(system.id);
-  } else {
+
+  if (system.flags.closeOnBackdrop === true && system.flags.closable) {
     props.windowManager.closeWindow(system.id);
+    return;
   }
+
+  props.windowManager.activateWindow(system.id);
 };
 
 const onGuides = (payload: { id: AwWindowId; guides: { x?: number; y?: number } }): void => {
@@ -445,7 +458,6 @@ const onGuides = (payload: { id: AwWindowId; guides: { x?: number; y?: number } 
 };
 
 onMounted((): void => {
-  // Capture phase so we trap keys even if focus is inside underlying content.
   window.addEventListener('keydown', onHostKeyEvent, { capture: true });
   window.addEventListener('keyup', onHostKeyEvent, { capture: true });
 });

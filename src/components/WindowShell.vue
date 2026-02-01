@@ -2,13 +2,13 @@
   <div
     ref="shellEl"
     class="aw-wm-window"
-    :class="{ 'is-active': win.isActive, 'is-minimized': win.state === 'minimized' }"
+    :class="{ 'is-active': isFocused, 'is-minimized': win.state === 'minimized' }"
     :style="windowStyle"
     @pointerdown="onActivate"
   >
     <div
       v-if="options.showTitleBar"
-      :class="win.isActive ? 'aw-wm-titlebar active' : 'aw-wm-titlebar'"
+      :class="isFocused ? 'aw-wm-titlebar active' : 'aw-wm-titlebar'"
       @pointerdown.stop="onTitleBarPointerDown"
       @dblclick.stop="onMinimize"
     >
@@ -78,10 +78,10 @@ interface Props {
   options: AwOptions;
   getBounds: () => AwBounds;
   getSnapTargets: (id: AwWindowId) => AwWindowRect[];
+  isFocused: boolean;
 }
 
 const props = defineProps<Props>();
-
 const emit = defineEmits<{
   (e: 'activate', id: AwWindowId): void;
   (e: 'move', payload: { id: AwWindowId; rect: AwWindowRect; bounds: AwBounds }): void;
@@ -94,7 +94,6 @@ const emit = defineEmits<{
 
 const shellEl = ref<HTMLElement | null>(null);
 
-
 const titleBarHeightPx = computed(() => {
   const el = shellEl.value;
   if (!el) {
@@ -105,7 +104,6 @@ const titleBarHeightPx = computed(() => {
   const px = readCssVarPx(host, '--aw-wm-titlebar-h');
   return px > 0 ? px : AW_TITLEBAR_HEIGHT;
 });
-
 
 const session = shallowRef<AwDragSession | null>(null);
 
