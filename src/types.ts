@@ -1,7 +1,7 @@
 // src/types.ts
 export type AwVueComponent = object;
 export type AwWindowId = string;
-export type AwWindowState = 'open' | 'minimized' | 'maximized' | 'closed';
+export type AwWindowState = 'open' | 'minimized' | 'maximized';
 
 export interface AwWindowRect {
   x: number;
@@ -18,6 +18,7 @@ export interface AwWindowFlags {
   maximizable: boolean;
   closeOnEsc?: boolean;
   closeOnBackdrop?: boolean;
+  isBlockingWindow?: boolean;
 }
 
 export type AwWindowLayer =
@@ -59,23 +60,28 @@ export interface AwWindowManager {
   activateWindow: (id: AwWindowId) => void;
   moveWindow: (
     id: AwWindowId,
-    next: { x: number, y: number },
-    bounds: { w: number, h: number }
+    next: { x: number; y: number },
+    bounds: { w: number; h: number },
   ) => void;
   resizeWindow: (
     id: AwWindowId,
-    next: { w: number, h: number },
-    bounds: { w: number, h: number }
+    next: { w: number; h: number },
+    bounds: { w: number; h: number },
   ) => void;
   toggleMinimize: (id: AwWindowId) => void;
-  toggleMaximize: (id: AwWindowId, bounds: { w: number, h: number }) => void;
+  toggleMaximize: (id: AwWindowId, bounds: { w: number; h: number }) => void;
   getWindowById: (id: AwWindowId) => AwWindowModel | undefined;
-  setWindowRect: (id: AwWindowId, rect: AwWindowRect, bounds: { w: number, h: number }) => void;
+  setWindowRect: (id: AwWindowId, rect: AwWindowRect, bounds: { w: number; h: number }) => void;
   getState: () => { windows: AwWindowModel[] };
   getWindows: () => AwWindowModel[];
   getWindowsForRender: () => readonly AwWindowModel[];
   setActiveWindow: (id: AwWindowId | null) => void;
   getLayerStartIndex: (layer: AwWindowLayer) => number;
+  getWindowsForLayer: (layer: AwWindowLayer) => readonly AwWindowModel[];
+  getTopmostInLayer: (layer: AwWindowLayer) => AwWindowModel | null;
+  getTopmostOverall: () => AwWindowModel | null;
+  closeWindowAsync: (id: AwWindowId) => Promise<void>;
+  hasModalWindows: () => boolean;
 }
 
 

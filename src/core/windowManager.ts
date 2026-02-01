@@ -41,15 +41,20 @@ const getBandKey = (layer: AwWindowLayer): BandKey => {
   return 'system';
 };
 
+
+type State = {
+  bands: Bands;
+};
+
 export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowManager => {
-  const state = reactive({
+  const state: State = reactive({
     bands: {
-      normal: [] as AwWindowModel[],
-      utility: [] as AwWindowModel[],
-      overlay: [] as AwWindowModel[],
-      modal: [] as AwWindowModel[],
-      system: [] as AwWindowModel[]
-    } as Bands
+      normal: [] ,
+      utility: [],
+      overlay: [],
+      modal: [] ,
+      system: [],
+    },
   });
 
   const closingIds = new Set<AwWindowId>();
@@ -87,25 +92,37 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   };
 
   const setActiveWindow = (id: AwWindowId | null): void => {
-    const all = getAllWindows();
-    all.forEach((win) => {
-      win.isActive = id ? win.id === id : false;
+    if (!id) {
+      // Clear active in all bands
+      for (const bandKey of BAND_ORDER) {
+        state.bands[bandKey].forEach((win) => {
+          win.isActive = false;
+        });
+      }
+      return;
+    }
+
+    const loc = findWindowLocationById(id);
+    if (!loc) {
+      return;
+    }
+
+    const band = state.bands[loc.bandKey];
+    band.forEach((win) => {
+      win.isActive = win.id === id;
     });
   };
 
-  const getTopmostInBand = (bandKey: BandKey): AwWindowModel | null => {
+  const getTopmostInLayer = (bandKey: BandKey): AwWindowModel | null => {
     const band = state.bands[bandKey];
-    for (let i = band.length - 1; i >= 0; i -= 1) {
-      const win = band[i];
-      if (win.state !== 'closed') {
-        return win;
-      }
+    if (band.length === 0) {
+      return null;
     }
-    return null;
+    return band[band.length - 1];
   };
 
   const getTopmostModal = (): AwWindowModel | null => {
-    return getTopmostInBand('modal');
+    return getTopmostInLayer('modal');
   };
 
   const bringToFrontWithinBand = (id: AwWindowId): void => {
@@ -124,12 +141,21 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     band.push(item);
   };
 
+  const isBlockingSystemWindow = (win: AwWindowModel): boolean => {
+    return win.flags.closeOnBackdrop === true || win.flags.closeOnEsc === true;
+  };
+
   const activateWindow = (id: AwWindowId): void => {
     const target = getWindowById(id);
     if (!target) {
       return;
     }
     if (target.isActive) {
+      return;
+    }
+
+    const topmostSystem = getTopmostInLayer('system');
+    if (topmostSystem && isBlockingSystemWindow(topmostSystem) && topmostSystem.id !== id) {
       return;
     }
 
@@ -221,9 +247,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     return all[all.length - 1];
   };
 
-  const getTopmostInLayer = (layer: AwWindowLayer): AwWindowModel | null => {
-    return getTopmostInBand(getBandKey(layer));
-  };
+
 
   const closeWindowAsync = async (id: AwWindowId): Promise<void> => {
     const win = getWindowById(id);
@@ -471,9 +495,38 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   return _exhaustive;
   }
 
+  const getWindowsForLayer = (layer: AwWindowLayer):readonly AwWindowModel[] => {
+    const { normal, utility, overlay, modal, system } = state.bands;
+    switch (layer) {
+      case 'normal': {
+        return normal;
+      }
+      case 'utility': {
+        return utility;
+      }
+      case 'overlay': {
+        return overlay;
+      }
+      case 'modal': {
+        return modal;
+      }
+      case 'system': {
+        return system;
+      }
+    }
+    // Exhaustiveness check – should never happen
+    const _exhaustive: never = layer;
+    return _exhaustive;
+  };
+
+  const hasModalWindows = () => {
+    return state.bands.modal.length > 0;
+  }
+
   return {
     openWindow,
     closeWindow,
+    closeWindowAsync,
     activateWindow,
     moveWindow,
     resizeWindow,
@@ -485,6 +538,10 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     setActiveWindow,
     getWindows,
     getWindowsForRender,
-    getLayerStartIndex
+    getWindowsForLayer,
+    getLayerStartIndex,
+    getTopmostOverall,
+    getTopmostInLayer,
+    hasModalWindows,
   };
 };

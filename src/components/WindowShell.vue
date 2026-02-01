@@ -78,7 +78,6 @@ interface Props {
   options: AwOptions;
   getBounds: () => AwBounds;
   getSnapTargets: (id: AwWindowId) => AwWindowRect[];
-  zIndex: number;
 }
 
 const props = defineProps<Props>();
@@ -107,16 +106,6 @@ const titleBarHeightPx = computed(() => {
   return px > 0 ? px : AW_TITLEBAR_HEIGHT;
 });
 
-/*const getToken = (name: string): string => {
-  const el = shellEl.value;
-  if (!el) {
-    return '';
-  }
-
-  const host = el.closest('.aw-wm-root') as HTMLElement | null;
-  const styles = getComputedStyle(host ?? el);
-  return styles.getPropertyValue(name).trim();
-};*/
 
 const session = shallowRef<AwDragSession | null>(null);
 
@@ -130,7 +119,6 @@ const windowStyle = computed<Record<string, string>>(() => {
     transform: `translate(${x}px, ${y}px)`,
     width: `${w}px`,
     height,
-    zIndex: String(props.zIndex),
   };
 });
 
