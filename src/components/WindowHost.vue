@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import WindowShell from './WindowShell.vue';
 import type {
   AwWindowManager,
@@ -193,9 +193,7 @@ const getTopmostModalWindow = (): AwWindowModel | null => {
 };
 
 const getTopmostNormalSideWindow = (): AwWindowModel | null => {
-  return (
-    overlayWindows.value.at(-1) ?? utilityWindows.value.at(-1) ?? normalWindows.value.at(-1) ?? null
-  );
+  return overlayWindows.value.at(-1) ?? normalWindows.value.at(-1) ?? null;
 };
 
 const focusedId = computed<AwWindowId | null>(() => {
@@ -272,7 +270,6 @@ const onMove = (payload: { id: AwWindowId; rect: AwWindowRect; bounds: Bounds })
 
 const onResize = (payload: { id: AwWindowId; rect: AwWindowRect; bounds: Bounds }): void => {
   props.windowManager.resizeWindow(payload.id, payload.rect);
-
 };
 
 const getVisibleRect = (win: { rect: AwWindowRect; state: string }): AwWindowRect => {
@@ -466,6 +463,14 @@ onBeforeUnmount((): void => {
   window.removeEventListener('keydown', onHostKeyEvent, { capture: true });
   window.removeEventListener('keyup', onHostKeyEvent, { capture: true });
 });
+
+watch(
+  focusedId,
+  (id) => {
+    props.windowManager.focusWindow(id);
+  },
+  { immediate: true },
+);
 </script>
 
 <style scoped>

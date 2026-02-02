@@ -10,7 +10,8 @@ export type {
   AwCreateWindowInput,
   AwWindowManager,
   AwWindowManagerHooks,
-  AwOptions
+  AwOptions,
+  AwVueComponent
 } from './types';
 export * from './constants';
 export { awCreateWindowManager } from './core/windowManager';

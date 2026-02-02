@@ -66,6 +66,8 @@ export interface AwWindowManager {
   getTopmostInLayer: (layer: AwWindowLayer) => AwWindowModel | null;
   getTopmostOverall: () => AwWindowModel | null;
   hasModalWindows: () => boolean;
+  focusWindow(id: AwWindowId | null): void;
+
 }
 
 export interface AwWindowManagerHooks {

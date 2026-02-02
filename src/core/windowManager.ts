@@ -146,19 +146,25 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       return;
     }
 
-    if (hooks.onBeforeWindowActivate) {
-      hooks.onBeforeWindowActivate(target);
-    }
-
-
-    const topmostBlockingSystem = getTopmostBlockingSystem();
-    if (topmostBlockingSystem && topmostBlockingSystem.id !== id) {
-      return;
+    if (target.layer !== 'system') {
+      const topmostBlockingSystem = getTopmostBlockingSystem();
+      if (topmostBlockingSystem && topmostBlockingSystem.id !== id) {
+        return;
+      }
     }
 
     const topmostModal = getTopmostModal();
     if (topmostModal && topmostModal.id !== id && target.layer !== 'system') {
       return;
+    }
+
+    const topmostInLayer = getTopmostInLayer(target.layer);
+    if (topmostInLayer && topmostInLayer.id === id) {
+      return;
+    }
+
+    if (hooks.onBeforeWindowActivate) {
+      hooks.onBeforeWindowActivate(target);
     }
 
     bringToFrontWithinBand(id);
@@ -167,6 +173,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       hooks.onWindowActivated(target);
     }
   };
+
 
 
   const isBoolean = (value: unknown): boolean => {
@@ -246,19 +253,17 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     return id;
   };
 
-  const removeWindowById = (id: AwWindowId): AwWindowModel | null => {
+  const removeWindowById = (id: AwWindowId): boolean => {
     const loc = findWindowLocationById(id);
     if (!loc) {
-      return null;
+      return false;
     }
 
     const band = state.bands[loc.bandKey];
     const removed = band.splice(loc.index, 1);
-    if (removed.length !== 1) {
-      return null;
-    }
-    return removed[0];
+    return removed.length === 1;
   };
+
 
   const getTopmostOverall = (): AwWindowModel | null => {
     const all = getAllWindows();
@@ -277,12 +282,22 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       return;
     }
 
+
+    const snapshot: AwWindowModel = {
+      ...win,
+      rect: { ...win.rect },
+      prevRect: win.prevRect ? { ...win.prevRect } : undefined,
+      flags: { ...win.flags },
+      props: win.props ? { ...win.props } : undefined,
+      meta: typeof win.meta === 'object' && win.meta !== null ? { ...(win.meta as Record<string, unknown>) } : win.meta
+    };
+
     try {
       closingIds.add(id);
 
       let allowClose = true;
       if (hooks.onBeforeWindowClose) {
-        allowClose = await hooks.onBeforeWindowClose(win);
+        allowClose = await hooks.onBeforeWindowClose(snapshot);
       }
       if (!allowClose) {
         return;
@@ -294,7 +309,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       }
 
       if (hooks.onWindowClosed) {
-        hooks.onWindowClosed(removed);
+        hooks.onWindowClosed(snapshot);
       }
     } finally {
       closingIds.delete(id);
@@ -304,6 +319,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   const closeWindow = (id: AwWindowId): void => {
     void closeWindowAsync(id);
   };
+
 
   const moveWindow = (id: AwWindowId, rect: AwWindowRect): void => {
     const win = getWindowById(id);
@@ -458,6 +474,28 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   const hasModalWindows = (): boolean => {
     return state.bands.modal.length > 0;
   };
+  let lastFocusedId: AwWindowId | null = null;
+  const focusWindow = (id: AwWindowId | null): void => {
+    if (id === lastFocusedId) {
+      return;
+    }
+
+    lastFocusedId = id;
+
+    if (!id) {
+      return;
+    }
+
+    const win = getWindowById(id);
+    if (!win) {
+      return;
+    }
+
+    if (hooks.onWindowActivated) {
+      hooks.onWindowActivated(win);
+    }
+  };
+
 
   return {
     openWindow,
@@ -477,5 +515,6 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     getTopmostOverall,
     getTopmostInLayer,
     hasModalWindows,
+    focusWindow
   };
 };
