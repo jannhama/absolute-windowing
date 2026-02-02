@@ -4,6 +4,7 @@ export type {
   AwWindowId,
   AwWindowState,
   AwWindowRect,
+  AwWindowLayer,
   AwWindowFlags,
   AwWindowModel,
   AwCreateWindowInput,

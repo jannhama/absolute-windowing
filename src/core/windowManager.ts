@@ -146,6 +146,11 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       return;
     }
 
+    if (hooks.onBeforeWindowActivate) {
+      hooks.onBeforeWindowActivate(target);
+    }
+
+
     const topmostBlockingSystem = getTopmostBlockingSystem();
     if (topmostBlockingSystem && topmostBlockingSystem.id !== id) {
       return;

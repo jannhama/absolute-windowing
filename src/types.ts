@@ -73,6 +73,7 @@ export interface AwWindowManagerHooks {
   onBeforeWindowClose?: (window: AwWindowModel) => boolean | Promise<boolean>;
   onWindowClosed?: (window: AwWindowModel) => void;
   onWindowActivated?: (window: AwWindowModel) => void;
+  onBeforeWindowActivate?: (window: AwWindowModel) => void;
   onWindowMove?: (window: AwWindowModel) => void;
   onWindowResize?: (window: AwWindowModel) => void;
 }
