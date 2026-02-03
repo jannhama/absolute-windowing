@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="props.windowManager"
     ref="hostEl"
     class="aw-wm-host aw-wm-root"
     :data-aw-theme="options.theme"
@@ -158,6 +159,7 @@ const modalWindows = computed(() => {
   return props.windowManager.getWindowsForLayer('modal');
 });
 const systemWindows = computed(() => {
+  console.log('wm:',props.windowManager);
   return props.windowManager.getWindowsForLayer('system');
 });
 
@@ -177,6 +179,9 @@ const isBlockingWindow = (win: AwWindowModel): boolean => {
 };
 
 const getTopmostBlockingSystemWindow = (): AwWindowModel | null => {
+  if (!systemWindows.value.length) {
+    return null;
+  }
   for (let i = systemWindows.value.length - 1; i >= 0; i -= 1) {
     const win = systemWindows.value[i];
     if (isBlockingWindow(win)) {

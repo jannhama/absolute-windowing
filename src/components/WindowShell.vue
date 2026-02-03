@@ -47,7 +47,16 @@
     </div>
 
     <div v-if="win.state === 'open' || win.state === 'maximized'" class="aw-wm-content">
-      <component :is="win.component" v-bind="win.props ?? {}" />
+
+      <component
+        :is="win.component"
+        v-bind="{
+          ...(win.props ?? {}),
+          windowId: win.id,
+          meta: win.meta,
+          isFocused: isFocused,
+        }"
+      />
     </div>
 
     <ResizeHandles
