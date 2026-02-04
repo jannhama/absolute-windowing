@@ -226,10 +226,6 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     };
 
 
-
-
-
-
     const win: AwWindowModel = {
       id,
       title: input.title,
