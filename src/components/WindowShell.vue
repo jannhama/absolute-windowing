@@ -17,6 +17,7 @@
       </div>
 
       <div v-if="options.showWindowControls" class="aw-wm-controls">
+        <slot name="titlebar-right" :win="win" :isFocused="isFocused" :options="options" />
         <button
           v-if="win.flags.minimizable"
           class="aw-wm-btn"
@@ -47,7 +48,6 @@
     </div>
 
     <div v-if="win.state === 'open' || win.state === 'maximized'" class="aw-wm-content">
-
       <component
         :is="win.component"
         v-bind="{
@@ -58,7 +58,6 @@
         }"
       />
     </div>
-
     <ResizeHandles
       v-if="win.flags.resizable && win.state === 'open'"
       @resizeStart="onResizeStart"
@@ -313,82 +312,5 @@ const detachGlobalPointerListeners = (): void => {
 </script>
 
 <style scoped>
-.aw-wm-window {
-  font-family: var(--aw-wm-font-family), sans-serif;
-  box-sizing: content-box;
-  position: absolute;
-  top: 0;
-  left: 0;
-  border: 1px solid var(--aw-wm-border);
-  border-radius: var(--aw-wm-radius);
-  background: var(--aw-wm-window-bg);
-  box-shadow: var(--aw-wm-shadow);
-  touch-action: none;
-}
 
-.aw-wm-window.is-active {
-  border-color: var(--aw-wm-border-active);
-}
-
-.aw-wm-window.is-minimized > .aw-wm-titlebar {
-  border-radius: var(--aw-wm-radius);
-}
-
-.aw-wm-titlebar {
-  height: var(--aw-wm-titlebar-h);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--aw-wm-titlebar-padding-x);
-  border-bottom: var(--aw-wm-titlebar-border-bottom);
-  border-radius: var(--aw-wm-radius) var(--aw-wm-radius) 0 0;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  background: var(--aw-wm-titlebar-bg);
-  gap: var(--aw-wm-controls-gap);
-  color: var(--aw-wm-title-text);
-}
-
-.aw-wm-titlebar:active {
-  cursor: grabbing;
-}
-
-.aw-wm-titlebar.active {
-  background-color: var(--aw-wm-titlebar-active-bg);
-}
-
-.aw-wm-title {
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.aw-wm-controls {
-  display: flex;
-  gap: 6px;
-}
-
-.aw-wm-btn {
-  height: 20px;
-  min-width: 22px;
-  padding: 0 6px;
-  border-radius: 6px;
-  border: 1px solid var(--aw-wm-btn-border);
-  background: var(--aw-wm-btn-bg);
-  color: rgba(255, 255, 255, 0.9);
-  cursor: pointer;
-}
-
-.aw-wm-btn:hover {
-  background: var(--aw-wm-btn-bg-hover);
-}
-
-.aw-wm-btn-close:hover {
-  background: var(--aw-wm-btn-close-hover);
-}
-
-.aw-wm-content {
-  height: calc(100% - 28px);
-  overflow: auto;
-}
 </style>

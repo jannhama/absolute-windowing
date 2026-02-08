@@ -1,3 +1,92 @@
 /* src/styles/index.css (example) */
 @import './tokens.css';
 @import './themes.css';
+
+
+.aw-wm-window {
+    font-family: var(--aw-wm-font-family), sans-serif;
+    box-sizing: content-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1px solid var(--aw-wm-border);
+    border-radius: var(--aw-wm-radius);
+    background: var(--aw-wm-window-bg);
+    box-shadow: var(--aw-wm-shadow);
+    touch-action: none;
+}
+
+.aw-wm-window.is-active {
+    border-color: var(--aw-wm-border-active);
+}
+
+.aw-wm-window.is-minimized > .aw-wm-titlebar {
+    border-radius: var(--aw-wm-radius);
+}
+
+.aw-wm-titlebar {
+    height: var(--aw-wm-titlebar-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--aw-wm-titlebar-padding-x);
+    border-bottom: var(--aw-wm-titlebar-border-bottom);
+    border-radius: var(--aw-wm-radius) var(--aw-wm-radius) 0 0;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    background: var(--aw-wm-titlebar-bg);
+    gap: var(--aw-wm-controls-gap);
+    color: var(--aw-wm-title-text);
+}
+
+.aw-wm-titlebar:active {
+    cursor: grabbing;
+}
+
+.aw-wm-titlebar.active {
+    background-color: var(--aw-wm-titlebar-active-bg);
+}
+
+.aw-wm-title {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.aw-wm-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.aw-wm-btn {
+    align-self: center;
+    height: 20px;
+    min-width: 22px;
+    padding: 0 6px;
+    border-radius: 6px;
+    border: 1px solid var(--aw-wm-btn-border);
+    background: var(--aw-wm-btn-bg);
+    color: var(--aw-wm-btn-color);
+    cursor: pointer;
+}
+
+.aw-wm-btn:hover {
+    background: var(--aw-wm-btn-bg-hover);
+}
+
+.aw-wm-btn:active {
+    background: var(--aw-wm-btn-bg);
+}
+
+.aw-wm-btn-close:hover {
+    background: var(--aw-wm-btn-close-hover);
+}
+
+.aw-wm-btn-close:active {
+    background: var(--aw-wm-btn-close-active);
+}
+
+.aw-wm-content {
+    height: calc(100% - var(--aw-wm-titlebar-h));
+    overflow: auto;
+}
