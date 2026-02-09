@@ -9,10 +9,11 @@ It provides draggable, resizable, layered windows (`normal`, `utility`, `overlay
 - Vue 3 component-based windows
 - Layer-aware z-ordering
 - Drag, resize, minimize, maximize, close
-- Window snapping (edges, grid, other windows)
+- Window snapping (edges, grid, other windows) is user-configurable. Great for building UI toolkits.
 - Modal and system blocking behavior
 - Optional close on `Escape` and backdrop click
 - Theme and density controls via options + CSS variables
+- Hiding the title bar and window controls (nice for fullscreen apps or embedded windows)
 
 ## Installation
 
@@ -219,10 +220,10 @@ npm run build
 ```
 ## AI the magical buzz word of today
 
-This framework has been in the works for years, at least in my mind. Lately I've been working on a hobby project that eventually had a need for a window manager,
-and I wanted to build something that I could use in the future. I wanted something that was simple to use.
+This framework has been in my thoughts for years. Lately I've been working on a hobby project that eventually had a need for a window manager,
+and I wanted to build something that I could use in the future. I wanted something that was simple to use but also use / try out AI code generation.
 It took a few iterations, mainly how to organize windows in the manager, but I'm happy with the result.
-I hope you find it useful too. Feel free to open issues or PRs to fix issues or add features.
+I hope you find it useful too. 
 
 AI has been used quite extensively during the development of this library. It took quite a bit of trial and error to figure out the how to instruct AI to write code in way I would write it.
 Some of the things I learned:
@@ -231,6 +232,11 @@ Some of the things I learned:
 - AI is huge help when you have a lot of code to write. It can help you organize it better, it can help with routine tasks like generating types, writing tests,
 - AI is not a magic wand. Sometimes you need to fix a lot of code AI generated to make it work.
 - AI makes you think about the problem you are trying to solve. It helps you think the problem from different angles and find the best solution.
+
+## Contributing
+
+While this framework as it is now fulfills my needs, I'm sure there are
+many places for improvements. Feel free to open issues or PRs to fix issues or add features. Contributions are welcome!
 
 ### Using AI to contribute to this project
 
@@ -288,6 +294,8 @@ Naturally you decide if you want to use AI or not. If you end up using it, do in
 >- If your solution is more complex than the existing code, stop and rethink.
 
 I also **highly recommend** that you instruct your AI to **not allow any GIT operations**. 
+
+
 
 ## License
 
