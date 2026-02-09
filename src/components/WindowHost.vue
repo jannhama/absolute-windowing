@@ -163,7 +163,7 @@ const modalWindows = computed(() => {
   return props.windowManager.getWindowsForLayer('modal');
 });
 const systemWindows = computed(() => {
-  console.log('wm:', props.windowManager);
+
   return props.windowManager.getWindowsForLayer('system');
 });
 
@@ -464,7 +464,7 @@ const onGuides = (payload: { id: AwWindowId; guides: { x?: number; y?: number } 
 };
 
 onMounted((): void => {
-  console.log('options:',props.options);
+  //console.log('options:',props.options);
   window.addEventListener('keydown', onHostKeyEvent, { capture: true });
   window.addEventListener('keyup', onHostKeyEvent, { capture: true });
 });
@@ -483,7 +483,7 @@ watch(
 );
 
 watch(()=> props.options, (newValue) => {
-  console.log('options changed:', newValue);
+  //console.log('options changed:', newValue);
 })
 </script>
 

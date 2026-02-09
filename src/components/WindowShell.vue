@@ -2,7 +2,7 @@
   <div
     ref="shellEl"
     class="aw-wm-window"
-    :class="{ 'is-active': isFocused, 'is-minimized': win.state === 'minimized' }"
+    :class="{ 'is-active': isFocused, 'is-minimized': win.state === 'minimized', 'hide-title-bar': !options.showTitleBar}"
     :style="windowStyle"
     @pointerdown="onActivate"
   >

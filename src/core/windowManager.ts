@@ -185,12 +185,6 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   ): AwWindowFlags => {
     const defaultBlocking = layer === 'modal' || layer === 'system';
 
-
-
-
-    console.log('blocking type is:',isBoolean(inputFlags.isBlockingWindow));
-    console.log('blocking value is:',inputFlags.isBlockingWindow);
-    console.log('default blocking value is:',defaultBlocking);
     const flags: AwWindowFlags = {
       movable: inputFlags.movable ?? true,
       resizable: inputFlags.resizable ?? true,
@@ -202,7 +196,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       isBlockingWindow: inputFlags.isBlockingWindow ?? defaultBlocking,
     };
 
-    console.log('flags are:',flags);
+    //    console.log('flags are:',flags);
     return flags;
   };
 
