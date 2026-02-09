@@ -1,22 +1,99 @@
 <template>
   <div
+    v-if="props.windowManager"
     ref="hostEl"
     class="aw-wm-host aw-wm-root"
     :data-aw-theme="options.theme"
     tabindex="0"
     @mousedown="onHostMouseDown"
   >
+    <WindowShell
+      v-for="(win, index) in normalWindows"
+      :key="win.id"
+      :win="win"
+      :isFocused="win.id === focusedId"
+      :getBounds="getBounds"
+      :getSnapTargets="getSnapTargets"
+      @activate="onActivate"
+      @move="onMove"
+      @resize="onResize"
+      @close="onClose"
+      @minimize="onMinimize"
+      @maximize="onMaximize"
+      @guides="onGuides"
+      :options="options"
+    >
+      <template #titlebar-right="slotProps">
+        <slot name="titlebar-right" v-bind="slotProps" />
+      </template>
+    </WindowShell>
+    <WindowShell
+      v-for="(win, index) in utilityWindows"
+      :key="win.id"
+      :win="win"
+      :isFocused="win.id === focusedId"
+      :getBounds="getBounds"
+      :getSnapTargets="getSnapTargets"
+      @activate="onActivate"
+      @move="onMove"
+      @resize="onResize"
+      @close="onClose"
+      @minimize="onMinimize"
+      @maximize="onMaximize"
+      @guides="onGuides"
+      :options="options"
+    />
+    <WindowShell
+      v-for="(win, index) in overlayWindows"
+      :key="win.id"
+      :win="win"
+      :isFocused="win.id === focusedId"
+      :getBounds="getBounds"
+      :getSnapTargets="getSnapTargets"
+      @activate="onActivate"
+      @move="onMove"
+      @resize="onResize"
+      @close="onClose"
+      @minimize="onMinimize"
+      @maximize="onMaximize"
+      @guides="onGuides"
+      :options="options"
+    />
+
     <div
       v-if="modalBackdropVisible"
       class="aw-wm-backdrop"
-      :style="{ zIndex: modalBackdropZIndex }"
       @mousedown.stop.prevent="onBackdropMouseDown"
     ></div>
+
     <WindowShell
-      v-for="(win, index) in windows"
+      v-for="(win, index) in modalWindows"
       :key="win.id"
       :win="win"
-      :zIndex="index + 1"
+      :isFocused="win.id === focusedId"
+      :getBounds="getBounds"
+      :getSnapTargets="getSnapTargets"
+      @activate="onActivate"
+      @move="onMove"
+      @resize="onResize"
+      @close="onClose"
+      @minimize="onMinimize"
+      @maximize="onMaximize"
+      @guides="onGuides"
+      :options="options"
+    />
+
+    <div
+      v-if="systemBackdropVisible"
+      class="aw-wm-backdrop"
+      @mousedown.stop.prevent="onSystemBackdropMouseDown"
+    ></div>
+
+    <WindowShell
+      v-for="(win, index) in systemWindows"
+      :key="win.id"
+      :win="win"
+      :isFocused="win.id === focusedId"
       :getBounds="getBounds"
       :getSnapTargets="getSnapTargets"
       @activate="onActivate"
@@ -43,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import WindowShell from './WindowShell.vue';
 import type {
   AwWindowManager,
@@ -53,9 +130,7 @@ import type {
   AwWindowModel,
 } from '../types.ts';
 import { shallowRef } from 'vue';
-
 import { AW_DEFAULT_OPTIONS, AW_TITLEBAR_HEIGHT } from '../constants';
-import { readCssVarPx } from '../internal/utils';
 
 interface Props {
   windowManager: AwWindowManager;
@@ -63,6 +138,34 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+interface Bounds {
+  w: number;
+  h: number;
+}
+
+const hostEl = ref<HTMLDivElement | null>(null);
+
+const windows = computed(() => {
+  return props.windowManager.getWindowsForRender();
+});
+
+const normalWindows = computed(() => {
+  return props.windowManager.getWindowsForLayer('normal');
+});
+const utilityWindows = computed(() => {
+  return props.windowManager.getWindowsForLayer('utility');
+});
+const overlayWindows = computed(() => {
+  return props.windowManager.getWindowsForLayer('overlay');
+});
+const modalWindows = computed(() => {
+  return props.windowManager.getWindowsForLayer('modal');
+});
+const systemWindows = computed(() => {
+  console.log('wm:', props.windowManager);
+  return props.windowManager.getWindowsForLayer('system');
+});
 
 const options = computed<AwOptions>(() => {
   const options = {
@@ -75,32 +178,59 @@ const options = computed<AwOptions>(() => {
 const snapGuides = shallowRef<{ x?: number; y?: number }>({});
 const guideOwner = shallowRef<AwWindowId | null>(null);
 
-const onGuides = (payload: { id: AwWindowId; guides: { x?: number; y?: number } }): void => {
-  guideOwner.value = payload.id;
-  snapGuides.value = payload.guides;
+const isBlockingWindow = (win: AwWindowModel): boolean => {
+  return win.flags.isBlockingWindow === true;
 };
-interface Bounds {
-  w: number;
-  h: number;
-}
 
-const hostEl = ref<HTMLDivElement | null>(null);
+const getTopmostBlockingSystemWindow = (): AwWindowModel | null => {
+  if (!systemWindows.value.length) {
+    return null;
+  }
+  for (let i = systemWindows.value.length - 1; i >= 0; i -= 1) {
+    const win = systemWindows.value[i];
+    if (isBlockingWindow(win)) {
+      return win;
+    }
+  }
+  return null;
+};
+const getTopmostSystemWindow = (): AwWindowModel | null => {
+  return systemWindows.value.at(-1) ?? null;
+};
+const getTopmostModalWindow = (): AwWindowModel | null => {
+  return modalWindows.value.at(-1) ?? null;
+};
 
-const windows = computed(() => {
-  return props.windowManager.getWindows();
+const getTopmostNormalSideWindow = (): AwWindowModel | null => {
+  return overlayWindows.value.at(-1) ?? normalWindows.value.at(-1) ?? null;
+};
+
+const focusedId = computed<AwWindowId | null>(() => {
+  const blockingSystem = getTopmostBlockingSystemWindow();
+  if (blockingSystem) {
+    return blockingSystem.id;
+  }
+
+  const modal = getTopmostModalWindow();
+  if (modal) {
+    return modal.id;
+  }
+
+  const normalSide = getTopmostNormalSideWindow();
+  if (normalSide) {
+    return normalSide.id;
+  }
+
+  return null;
 });
 
-/*
-const modalBackdropZIndex = computed(() => {
-  return windows.value.findIndex((w) => w.layer === 'modal');
+const systemBackdropVisible = computed((): boolean => {
+  return systemWindows.value.some((win) => win.flags.isBlockingWindow === true);
 });
-*/
 
-/*
-const modalBackdropVisible = computed(() => {
-  return windows.value.some((w) => w.layer === 'modal');
+const modalBackdropVisible = computed((): boolean => {
+  return props.windowManager.hasModalWindows();
 });
-*/
 
 const getBounds = (): Bounds => {
   const el = hostEl.value;
@@ -144,11 +274,11 @@ const onMaximize = (payload: { id: AwWindowId; bounds: Bounds }): void => {
 };
 
 const onMove = (payload: { id: AwWindowId; rect: AwWindowRect; bounds: Bounds }) => {
-  props.windowManager.setWindowRect(payload.id, payload.rect, payload.bounds);
+  props.windowManager.moveWindow(payload.id, payload.rect);
 };
 
 const onResize = (payload: { id: AwWindowId; rect: AwWindowRect; bounds: Bounds }): void => {
-  props.windowManager.setWindowRect(payload.id, payload.rect, payload.bounds);
+  props.windowManager.resizeWindow(payload.id, payload.rect);
 };
 
 const getVisibleRect = (win: { rect: AwWindowRect; state: string }): AwWindowRect => {
@@ -160,8 +290,8 @@ const getVisibleRect = (win: { rect: AwWindowRect; state: string }): AwWindowRec
 
 const getSnapTargets = (id: AwWindowId): AwWindowRect[] => {
   return windows.value
-    .filter((w) => w.id !== id && w.state !== 'closed')
-    .map((w) => getVisibleRect(w));
+    .filter((candidate) => candidate.id !== id)
+    .map((candidate) => getVisibleRect(candidate));
 };
 
 // -------------------------
@@ -188,16 +318,6 @@ const isTextInputTarget = (target: EventTarget | null): boolean => {
   return false;
 };
 
-const getActiveModalWindow = (): AwWindowModel | null => {
-  const win = windows.value.find((w) => w.isActive && w.layer === 'modal' && w.state !== 'closed');
-  return win ?? null;
-};
-
-const getActiveWindow = (): AwWindowModel | null => {
-  const win = windows.value.find((w) => w.isActive && w.state !== 'closed');
-  return win ?? null;
-};
-
 const deliverKey = (win: AwWindowModel, event: KeyboardEvent): boolean => {
   if (event.type === 'keydown') {
     if (!win.onKeyDown) {
@@ -216,68 +336,6 @@ const deliverKey = (win: AwWindowModel, event: KeyboardEvent): boolean => {
   return false;
 };
 
-const onHostKeyEvent = (event: KeyboardEvent): void => {
-  if (isTextInputTarget(event.target)) {
-    return;
-  }
-
-  const modal = getActiveModalWindow();
-  if (modal) {
-    const handled = deliverKey(modal, event);
-    event.stopPropagation();
-    if (handled) {
-      event.preventDefault();
-    }
-    return;
-  }
-
-  const active = getActiveWindow();
-  if (!active) {
-    return;
-  }
-
-  const handled = deliverKey(active, event);
-  if (!handled) {
-    return;
-  }
-
-  event.preventDefault();
-  event.stopPropagation();
-};
-
-const getTopmostModalWindow = (): AwWindowModel | null => {
-  // windows are assumed to already be in render/z order
-  for (let i = windows.value.length - 1; i >= 0; i -= 1) {
-    const win = windows.value[i];
-    if (win.layer === 'modal' && win.state !== 'closed') {
-      return win;
-    }
-  }
-  return null;
-};
-
-const getFirstModalZIndex = (): number | null => {
-  for (let i = 0; i < windows.value.length; i += 1) {
-    const win = windows.value[i];
-    if (win.layer === 'modal' && win.state !== 'closed') {
-      return i + 1;
-    }
-  }
-  return null;
-};
-
-const modalBackdropVisible = computed((): boolean => {
-  return getFirstModalZIndex() !== null;
-});
-
-const modalBackdropZIndex = computed((): number => {
-  const firstModalZ = getFirstModalZIndex();
-  if (firstModalZ === null) {
-    return 0;
-  }
-  return Math.max(0, firstModalZ );
-});
-
 const onBackdropMouseDown = (): void => {
   const el = hostEl.value;
   if (el) {
@@ -289,25 +347,144 @@ const onBackdropMouseDown = (): void => {
     props.windowManager.activateWindow(modal.id);
   }
 };
-onMounted((): void => {
-  const el = hostEl.value;
-  if (!el) {
+
+const onHostKeyEvent = (event: KeyboardEvent): void => {
+  const blockingSystem = getTopmostBlockingSystemWindow();
+  const modal = getTopmostModalWindow();
+  const system = systemWindows.value.at(-1) ?? null;
+
+  if (blockingSystem) {
+    if (event.type === 'keydown' && event.key === 'Tab') {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.type === 'keydown' && event.key === 'Escape') {
+      const canClose = blockingSystem.flags.closable && blockingSystem.flags.closeOnEsc === true;
+      if (canClose) {
+        props.windowManager.closeWindow(blockingSystem.id);
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+    }
+
+    const handled = deliverKey(blockingSystem, event);
+    event.stopPropagation();
+    if (handled) {
+      event.preventDefault();
+    }
     return;
   }
 
-  el.addEventListener('keydown', onHostKeyEvent);
-  el.addEventListener('keyup', onHostKeyEvent);
+  if (modal) {
+    if (event.type === 'keydown' && event.key === 'Tab') {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.type === 'keydown' && event.key === 'Escape') {
+      const canClose = modal.flags.closable && modal.flags.closeOnEsc === true;
+      if (canClose) {
+        props.windowManager.closeWindow(modal.id);
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+    }
+
+    const handled = deliverKey(modal, event);
+    event.stopPropagation();
+    if (handled) {
+      event.preventDefault();
+    }
+    return;
+  }
+
+  if (isTextInputTarget(event.target)) {
+    return;
+  }
+
+  const normalSide = getTopmostNormalSideWindow();
+  if (!normalSide) {
+    return;
+  }
+
+  const handled = deliverKey(normalSide, event);
+  if (!handled) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+};
+
+const onSystemBackdropMouseDown = (): void => {
+  const el = hostEl.value;
+  if (el) {
+    el.focus();
+  }
+
+  const system = getTopmostBlockingSystemWindow() ?? systemWindows.value.at(-1) ?? null;
+  if (!system) {
+    return;
+  }
+
+  if (system.flags.closeOnBackdrop === true && system.flags.closable) {
+    props.windowManager.closeWindow(system.id);
+    return;
+  }
+
+  props.windowManager.activateWindow(system.id);
+};
+
+const onGuides = (payload: { id: AwWindowId; guides: { x?: number; y?: number } }): void => {
+  const isEmpty = payload.guides.x === undefined && payload.guides.y === undefined;
+
+  if (!guideOwner.value) {
+    if (isEmpty) {
+      return;
+    }
+    guideOwner.value = payload.id;
+  }
+
+  if (payload.id !== guideOwner.value) {
+    return;
+  }
+
+  if (isEmpty) {
+    guideOwner.value = null;
+    snapGuides.value = {};
+    return;
+  }
+
+  snapGuides.value = payload.guides;
+};
+
+onMounted((): void => {
+  console.log('options:',props.options);
+  window.addEventListener('keydown', onHostKeyEvent, { capture: true });
+  window.addEventListener('keyup', onHostKeyEvent, { capture: true });
 });
 
 onBeforeUnmount((): void => {
-  const el = hostEl.value;
-  if (!el) {
-    return;
-  }
-
-  el.removeEventListener('keydown', onHostKeyEvent);
-  el.removeEventListener('keyup', onHostKeyEvent);
+  window.removeEventListener('keydown', onHostKeyEvent, { capture: true });
+  window.removeEventListener('keyup', onHostKeyEvent, { capture: true });
 });
+
+watch(
+  focusedId,
+  (id) => {
+    props.windowManager.focusWindow(id);
+  },
+  { immediate: true, deep: true },
+);
+
+watch(()=> props.options, (newValue) => {
+  console.log('options changed:', newValue);
+})
 </script>
 
 <style scoped>

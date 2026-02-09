@@ -6,7 +6,7 @@
     "emitDeclarationOnly": true,
     "declarationMap": false,
     "stripInternal": true,
-
+    "target": "ES6",
     "rootDir": "./src",
     "outDir": "./dist"
   },

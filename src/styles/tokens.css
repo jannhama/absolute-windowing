@@ -23,9 +23,10 @@
     --aw-wm-btn-bg-hover: rgba(255, 255, 255, 0.10);
     --aw-wm-btn-border: rgba(255, 255, 255, 0.10);
     --aw-wm-btn-close-hover: rgba(255, 70, 70, 0.25);
+    --aw-wm-btn-close-active: rgba(255, 70, 70, 0.15);
 
     /* shape & shadow */
-    --aw-wm-radius: 10px;
+    --aw-wm-radius: 2px;
     --aw-wm-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
 
     /* layout */

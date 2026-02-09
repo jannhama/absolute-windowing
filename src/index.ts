@@ -4,12 +4,14 @@ export type {
   AwWindowId,
   AwWindowState,
   AwWindowRect,
+  AwWindowLayer,
   AwWindowFlags,
   AwWindowModel,
   AwCreateWindowInput,
   AwWindowManager,
   AwWindowManagerHooks,
-  AwOptions
+  AwOptions,
+  AwVueComponent
 } from './types';
 export * from './constants';
 export { awCreateWindowManager } from './core/windowManager';

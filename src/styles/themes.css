@@ -16,6 +16,9 @@
     --aw-wm-btn-bg-hover: rgba(255, 255, 255, 0.10);
     --aw-wm-btn-border: rgba(255, 255, 255, 0.10);
     --aw-wm-btn-close-hover: rgba(255, 70, 70, 0.25);
+    --aw-wm-btn-close-active: rgba(255, 70, 70, 0.15);
+
+    --aw-wm-btn-color: #eaeaea;
 
     /* shape & shadow */
     --aw-wm-radius: 0px;
@@ -40,9 +43,13 @@
     --aw-wm-btn-bg-hover: rgba(0, 0, 0, 0.30);
     --aw-wm-btn-border: rgba(0, 0, 0, 0.12);
     --aw-wm-btn-close-hover: rgba(220, 50, 50, 0.80);
+    --aw-wm-btn-close-active: rgba(255, 70, 70, 0.60);
+
+    --aw-wm-btn-color: #212121;
 
     --aw-wm-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
     --aw-wm-shadow-active: 0 10px 24px rgba(0, 0, 0, 0.18);
+
 }
 
 /* Density presets */
