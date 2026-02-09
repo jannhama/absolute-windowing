@@ -28,6 +28,7 @@
     "build-types": "vue-tsc -p tsconfig.build.json",
     "build-only": "vite build",
     "build": "npm run type-check && npm run build-only && npm run build-types && npm run copy-styles",
+    "test": "npm run build-only && node --test tests/**/*.test.mjs",
     "copy-styles": "node scripts/copyStyles.mjs",
     "lint": "eslint . --fix --cache"
   },
