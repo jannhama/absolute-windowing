@@ -27,4 +27,5 @@ export const clamp = (value: number, min: number, max: number): number => {
   return value;
 };
 
-export const genId = (): string => `w_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
+export const genId = (): string =>
+  `w_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;

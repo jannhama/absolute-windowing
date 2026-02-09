@@ -18,16 +18,16 @@ import HelloWorld from './HelloWorld.vue';
 
 <style scoped>
 .hello-window-content {
-    display: flex;
-    position: relative;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    color: var(--aw-wm-window-font-color);
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  color: var(--aw-wm-window-font-color);
 }
 
 .hello {
-    text-align: center;
+  text-align: center;
 }
 
 .logo {

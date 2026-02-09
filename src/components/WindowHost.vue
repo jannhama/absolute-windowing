@@ -11,9 +11,10 @@
       v-for="(win, index) in normalWindows"
       :key="win.id"
       :win="win"
-      :isFocused="win.id === focusedId"
-      :getBounds="getBounds"
-      :getSnapTargets="getSnapTargets"
+      :is-focused="win.id === focusedId"
+      :get-bounds="getBounds"
+      :get-snap-targets="getSnapTargets"
+      :options="options"
       @activate="onActivate"
       @move="onMove"
       @resize="onResize"
@@ -21,7 +22,6 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-      :options="options"
     >
       <template #titlebar-right="slotProps">
         <slot name="titlebar-right" v-bind="slotProps" />
@@ -31,9 +31,10 @@
       v-for="(win, index) in utilityWindows"
       :key="win.id"
       :win="win"
-      :isFocused="win.id === focusedId"
-      :getBounds="getBounds"
-      :getSnapTargets="getSnapTargets"
+      :is-focused="win.id === focusedId"
+      :get-bounds="getBounds"
+      :get-snap-targets="getSnapTargets"
+      :options="options"
       @activate="onActivate"
       @move="onMove"
       @resize="onResize"
@@ -41,15 +42,15 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-      :options="options"
     />
     <WindowShell
       v-for="(win, index) in overlayWindows"
       :key="win.id"
       :win="win"
-      :isFocused="win.id === focusedId"
-      :getBounds="getBounds"
-      :getSnapTargets="getSnapTargets"
+      :is-focused="win.id === focusedId"
+      :get-bounds="getBounds"
+      :get-snap-targets="getSnapTargets"
+      :options="options"
       @activate="onActivate"
       @move="onMove"
       @resize="onResize"
@@ -57,22 +58,22 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-      :options="options"
     />
 
     <div
       v-if="modalBackdropVisible"
       class="aw-wm-backdrop"
       @mousedown.stop.prevent="onBackdropMouseDown"
-    ></div>
+    />
 
     <WindowShell
       v-for="(win, index) in modalWindows"
       :key="win.id"
       :win="win"
-      :isFocused="win.id === focusedId"
-      :getBounds="getBounds"
-      :getSnapTargets="getSnapTargets"
+      :is-focused="win.id === focusedId"
+      :get-bounds="getBounds"
+      :get-snap-targets="getSnapTargets"
+      :options="options"
       @activate="onActivate"
       @move="onMove"
       @resize="onResize"
@@ -80,22 +81,22 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-      :options="options"
     />
 
     <div
       v-if="systemBackdropVisible"
       class="aw-wm-backdrop"
       @mousedown.stop.prevent="onSystemBackdropMouseDown"
-    ></div>
+    />
 
     <WindowShell
       v-for="(win, index) in systemWindows"
       :key="win.id"
       :win="win"
-      :isFocused="win.id === focusedId"
-      :getBounds="getBounds"
-      :getSnapTargets="getSnapTargets"
+      :is-focused="win.id === focusedId"
+      :get-bounds="getBounds"
+      :get-snap-targets="getSnapTargets"
+      :options="options"
       @activate="onActivate"
       @move="onMove"
       @resize="onResize"
@@ -103,19 +104,18 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-      :options="options"
     />
 
     <div
       v-if="showGuideX"
       class="aw-wm-guide aw-wm-guide-x"
       :style="{ left: snapGuides.x + 'px' }"
-    ></div>
+    />
     <div
       v-if="showGuideY"
       class="aw-wm-guide aw-wm-guide-y"
       :style="{ top: snapGuides.y + 'px' }"
-    ></div>
+    />
   </div>
 </template>
 
@@ -127,7 +127,7 @@ import type {
   AwOptions,
   AwWindowRect,
   AwWindowId,
-  AwWindowModel,
+  AwWindowModel
 } from '../types.ts';
 import { shallowRef } from 'vue';
 import { AW_DEFAULT_OPTIONS, AW_TITLEBAR_HEIGHT } from '../constants';
@@ -163,14 +163,13 @@ const modalWindows = computed(() => {
   return props.windowManager.getWindowsForLayer('modal');
 });
 const systemWindows = computed(() => {
-
   return props.windowManager.getWindowsForLayer('system');
 });
 
 const options = computed<AwOptions>(() => {
   const options = {
     ...AW_DEFAULT_OPTIONS,
-    ...(props.options ?? {}),
+    ...(props.options ?? {})
   };
   return options;
 });
@@ -479,12 +478,15 @@ watch(
   (id) => {
     props.windowManager.focusWindow(id);
   },
-  { immediate: true, deep: true },
+  { immediate: true, deep: true }
 );
 
-watch(()=> props.options, (newValue) => {
-  //console.log('options changed:', newValue);
-})
+watch(
+  () => props.options,
+  (newValue) => {
+    //console.log('options changed:', newValue);
+  }
+);
 </script>
 
 <style scoped>

@@ -16,7 +16,9 @@
   "files": [
     "dist"
   ],
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "peerDependencies": {
     "vue": "^3.3.0"
   },
@@ -37,6 +39,7 @@
     "@vitejs/plugin-vue": "^6.0.3",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "~10.6.2",
+    "jiti": "^2.6.1",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",

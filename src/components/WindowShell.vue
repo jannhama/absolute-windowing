@@ -2,7 +2,11 @@
   <div
     ref="shellEl"
     class="aw-wm-window"
-    :class="{ 'is-active': isFocused, 'is-minimized': win.state === 'minimized', 'hide-title-bar': !options.showTitleBar}"
+    :class="{
+      'is-active': isFocused,
+      'is-minimized': win.state === 'minimized',
+      'hide-title-bar': !options.showTitleBar
+    }"
     :style="windowStyle"
     @pointerdown="onActivate"
   >
@@ -17,7 +21,7 @@
       </div>
 
       <div v-if="options.showWindowControls" class="aw-wm-controls">
-        <slot name="titlebar-right" :win="win" :isFocused="isFocused" :options="options" />
+        <slot name="titlebar-right" :win="win" :is-focused="isFocused" :options="options" />
         <button
           v-if="win.flags.minimizable"
           class="aw-wm-btn"
@@ -54,13 +58,13 @@
           ...(win.props ?? {}),
           windowId: win.id,
           meta: win.meta,
-          isFocused: isFocused,
+          isFocused: isFocused
         }"
       />
     </div>
     <ResizeHandles
       v-if="win.flags.resizable && win.state === 'open'"
-      @resizeStart="onResizeStart"
+      @resize-start="onResizeStart"
     />
   </div>
 </template>
@@ -76,7 +80,7 @@ import {
   normalizeRectWithinBounds,
   resizeRectWithinBounds,
   resizeRectWithWindowSnap,
-  snapRectToOtherRectsWithGuides,
+  snapRectToOtherRectsWithGuides
 } from '../input/geometry';
 import { AW_DEFAULT_OPTIONS, AW_TITLEBAR_HEIGHT } from '../constants';
 import { readCssVarPx } from '../internal/utils';
@@ -124,7 +128,7 @@ const windowStyle = computed<Record<string, string>>(() => {
   return {
     transform: `translate(${x}px, ${y}px)`,
     width: `${w}px`,
-    height,
+    height
   };
 });
 
@@ -164,7 +168,7 @@ const onTitleBarPointerDown = (e: PointerEvent): void => {
     pointerId: e.pointerId,
     startClientX: e.clientX,
     startClientY: e.clientY,
-    startRect: { ...win.rect },
+    startRect: { ...win.rect }
   };
 
   attachGlobalPointerListeners();
@@ -190,7 +194,7 @@ const onResizeStart = (payload: { event: PointerEvent; dir: AwResizeDirection })
     dir: payload.dir,
     startClientX: payload.event.clientX,
     startClientY: payload.event.clientY,
-    startRect: { ...win.rect },
+    startRect: { ...win.rect }
   };
 
   attachGlobalPointerListeners();
@@ -244,7 +248,7 @@ const onPointerMove = (e: PointerEvent): void => {
       effectiveSize,
       gridSize: props.options.gridSize,
       enableEdgeSnap,
-      enableGridSnap,
+      enableGridSnap
     });
 
     if (enableWindowSnap) {
@@ -275,7 +279,7 @@ const onPointerMove = (e: PointerEvent): void => {
       minWidth: props.options.minWidth ?? AW_DEFAULT_OPTIONS.minWidth,
       minHeight: props.options.minHeight,
       gridSize: props.options.gridSize,
-      enableGridSnap,
+      enableGridSnap
     });
 
     if (enableWindowSnap) {
@@ -286,7 +290,7 @@ const onPointerMove = (e: PointerEvent): void => {
         snapped.rect,
         bounds,
         props.options.minWidth,
-        props.options.minHeight,
+        props.options.minHeight
       );
 
       emit('guides', { id: ses.id, guides: snapped.guides });
@@ -311,6 +315,4 @@ const detachGlobalPointerListeners = (): void => {
 };
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

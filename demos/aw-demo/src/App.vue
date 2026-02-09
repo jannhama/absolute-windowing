@@ -5,7 +5,9 @@
     <button @click="onToggleSnap" :class="snapping ? 'is-active' : ''">Toggle snap</button>
     <button @click="onToggleGuides" :class="showGuides ? 'is-active' : ''">Toggle guides</button>
     <button @click="onToggleLock" :class="locked ? 'is-active' : ''">Toggle lock</button>
-    <button @click="onToggleShowTitles" :class="showTitleBar ? 'is-active' : ''">Toggle show title bar</button>
+    <button @click="onToggleShowTitles" :class="showTitleBar ? 'is-active' : ''">
+      Toggle show title bar
+    </button>
   </div>
 
   <div class="surface">
@@ -19,7 +21,7 @@
         gridSize: 32,
         showGuides: showGuides,
         locked: locked,
-        showTitleBar: showTitleBar
+        showTitleBar: showTitleBar,
       }"
     />
   </div>
@@ -45,7 +47,6 @@ const showTitleBar = ref(true);
 const showGuides = ref(false);
 const snapping = ref(false);
 const locked = ref(false);
-
 
 const onOpenHello = () => {
   manager.openWindow({
@@ -77,8 +78,6 @@ const onToggleLock = () => {
 const onToggleShowTitles = () => {
   showTitleBar.value = !showTitleBar.value;
 };
-
-
 </script>
 
 <style scoped>

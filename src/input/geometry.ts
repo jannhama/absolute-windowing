@@ -5,10 +5,10 @@ import type {
   AwResizeDirection,
   AwResizeOptions,
   AwSnap1DResult,
-  AwSnapGuides,
+  AwSnapGuides
 } from '../internal/types';
 
-import {  AwWindowRect} from '../types';
+import { AwWindowRect } from '../types';
 export const clamp = (value: number, min: number, max: number): number => {
   if (value < min) {
     return min;
@@ -52,8 +52,8 @@ export const moveRectWithinBounds = (awMoveRectOptions: AwMoveRectOptions): AwWi
     }
   }
 
-  const doGridSnap
-    = awMoveRectOptions.enableGridSnap === true && (awMoveRectOptions.gridSize ?? 0) > 1;
+  const doGridSnap =
+    awMoveRectOptions.enableGridSnap === true && (awMoveRectOptions.gridSize ?? 0) > 1;
   if (doGridSnap) {
     x = snapToGrid(x, awMoveRectOptions.gridSize as number);
     y = snapToGrid(y, awMoveRectOptions.gridSize as number);
@@ -74,7 +74,7 @@ export const snapToGrid = (value: number, gridSize: number): number => {
   return Math.round(value / gridSize) * gridSize;
 };
 
-const applyMinSizeForWest = (x: number, w: number, minW: number): { x: number, w: number } => {
+const applyMinSizeForWest = (x: number, w: number, minW: number): { x: number; w: number } => {
   if (w >= minW) {
     return { x, w };
   }
@@ -82,7 +82,7 @@ const applyMinSizeForWest = (x: number, w: number, minW: number): { x: number, w
   return { x: x - delta, w: minW };
 };
 
-const applyMinSizeForNorth = (y: number, h: number, minH: number): { y: number, h: number } => {
+const applyMinSizeForNorth = (y: number, h: number, minH: number): { y: number; h: number } => {
   if (h >= minH) {
     return { y, h };
   }
@@ -237,7 +237,7 @@ export const resizeRectWithinBounds = (input: AwResizeOptions): AwWindowRect => 
 export const clampRectPosition = (
   rect: AwWindowRect,
   bounds: AwBounds,
-  effectiveSize?: { w: number, h: number }
+  effectiveSize?: { w: number; h: number }
 ): AwWindowRect => {
   if (bounds.w <= 0 || bounds.h <= 0) {
     return rect;
@@ -265,12 +265,7 @@ const findBestSnap1D = (
 ): number | null => {
   // Returns delta to apply to moving coordinates (x or y), or null if no snap within threshold.
   // We try to align movingA or movingB to targetA or targetB.
-  const candidates = [
-    targetA - movingA,
-    targetB - movingA,
-    targetA - movingB,
-    targetB - movingB
-  ];
+  const candidates = [targetA - movingA, targetB - movingA, targetA - movingB, targetB - movingB];
 
   let best: number | null = null;
   let bestAbs = Number.POSITIVE_INFINITY;
@@ -370,7 +365,7 @@ export const snapRectToOtherRectsWithGuides = (
   rect: AwWindowRect,
   targets: AwWindowRect[],
   snapPx: number
-): { rect: AwWindowRect, guides: AwSnapGuides } => {
+): { rect: AwWindowRect; guides: AwSnapGuides } => {
   if (targets.length === 0) {
     return { rect, guides: {} };
   }
@@ -425,9 +420,14 @@ export const snapRectToOtherRectsWithGuides = (
     }
   };
 };
-const rangesOverlap = (a0: number, a1: number, b0: number, b1: number): boolean => Math.max(a0, b0) < Math.min(a1, b1);
+const rangesOverlap = (a0: number, a1: number, b0: number, b1: number): boolean =>
+  Math.max(a0, b0) < Math.min(a1, b1);
 
-const bestSnapDeltaToTargets = (value: number, targets: number[], snapPx: number): { delta: number, guide: number } | null => {
+const bestSnapDeltaToTargets = (
+  value: number,
+  targets: number[],
+  snapPx: number
+): { delta: number; guide: number } | null => {
   let bestDelta = 0;
   let bestGuide = 0;
   let bestAbs = Number.POSITIVE_INFINITY;
@@ -453,7 +453,7 @@ export const resizeRectWithWindowSnap = (
   dir: AwResizeDirection,
   targets: AwWindowRect[],
   snapPx: number
-): { rect: AwWindowRect, guides: AwSnapGuides } => {
+): { rect: AwWindowRect; guides: AwSnapGuides } => {
   if (targets.length === 0) {
     return { rect, guides: {} };
   }
@@ -494,7 +494,7 @@ export const resizeRectWithWindowSnap = (
   if (dir.includes('e') && xTargets.length > 0) {
     const res = bestSnapDeltaToTargets(right, xTargets, snapPx);
     if (res) {
-      w = (right + res.delta) - x;
+      w = right + res.delta - x;
       guideX = res.guide;
     }
   }
@@ -514,7 +514,7 @@ export const resizeRectWithWindowSnap = (
   if (dir.includes('s') && yTargets.length > 0) {
     const res = bestSnapDeltaToTargets(bottom, yTargets, snapPx);
     if (res) {
-      h = (bottom + res.delta) - y;
+      h = bottom + res.delta - y;
       guideY = res.guide;
     }
   }

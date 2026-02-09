@@ -19,7 +19,7 @@ export const AW_DEFAULT_OPTIONS: AwOptions = {
   snapToWindows: false,
   locked: false,
   minWidth: 320,
-  minHeight: 240,
+  minHeight: 240
 };
 
 export const AW_DEFAULT_FLAGS: AwWindowFlags = {
@@ -37,5 +37,5 @@ export const AW_DEFAULT_RECT: AwWindowRect = {
   x: 40,
   y: 40,
   w: 480,
-  h: 320,
+  h: 320
 };

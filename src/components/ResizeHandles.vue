@@ -1,14 +1,41 @@
 <template>
-  <div class="aw-wm-handlewm-resize-layer" aria-hidden="true">
-    <div class="aw-wm-handle aw-wm-handle-n" @pointerdown.stop="start($event, 'n')"></div>
-    <div class="aw-wm-handle aw-wm-handle-e" @pointerdown.stop="start($event, 'e')"></div>
-    <div class="aw-wm-handle aw-wm-handle-s" @pointerdown.stop="start($event, 's')"></div>
-    <div class="aw-wm-handle aw-wm-handle-w" @pointerdown.stop="start($event, 'w')"></div>
+  <div
+    class="aw-wm-handlewm-resize-layer"
+    aria-hidden="true"
+  >
+    <div
+      class="aw-wm-handle aw-wm-handle-n"
+      @pointerdown.stop="start($event, 'n')"
+    />
+    <div
+      class="aw-wm-handle aw-wm-handle-e"
+      @pointerdown.stop="start($event, 'e')"
+    />
+    <div
+      class="aw-wm-handle aw-wm-handle-s"
+      @pointerdown.stop="start($event, 's')"
+    />
+    <div
+      class="aw-wm-handle aw-wm-handle-w"
+      @pointerdown.stop="start($event, 'w')"
+    />
 
-    <div class="aw-wm-handle aw-wm-handle-ne" @pointerdown.stop="start($event, 'ne')"></div>
-    <div class="aw-wm-handle aw-wm-handle-nw" @pointerdown.stop="start($event, 'nw')"></div>
-    <div class="aw-wm-handle aw-wm-handle-se" @pointerdown.stop="start($event, 'se')"></div>
-    <div class="aw-wm-handle aw-wm-handle-sw" @pointerdown.stop="start($event, 'sw')"></div>
+    <div
+      class="aw-wm-handle aw-wm-handle-ne"
+      @pointerdown.stop="start($event, 'ne')"
+    />
+    <div
+      class="aw-wm-handle aw-wm-handle-nw"
+      @pointerdown.stop="start($event, 'nw')"
+    />
+    <div
+      class="aw-wm-handle aw-wm-handle-se"
+      @pointerdown.stop="start($event, 'se')"
+    />
+    <div
+      class="aw-wm-handle aw-wm-handle-sw"
+      @pointerdown.stop="start($event, 'sw')"
+    />
   </div>
 </template>
 

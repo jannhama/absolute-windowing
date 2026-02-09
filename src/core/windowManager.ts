@@ -8,7 +8,7 @@ import type {
   AwWindowManager,
   AwWindowManagerHooks,
   AwWindowModel,
-  AwWindowRect,
+  AwWindowRect
 } from '../types';
 import { AW_DEFAULT_FLAGS, AW_DEFAULT_RECT } from '../constants';
 import { clamp, genId } from '../internal/utils';
@@ -52,8 +52,8 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       utility: [],
       overlay: [],
       modal: [],
-      system: [],
-    },
+      system: []
+    }
   });
 
   const closingIds = new Set<AwWindowId>();
@@ -71,7 +71,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
   };
 
   const findWindowLocationById = (
-    id: AwWindowId,
+    id: AwWindowId
   ): { bandKey: BandKey; index: number; win: AwWindowModel } | null => {
     for (const bandKey of BAND_ORDER) {
       const band = state.bands[bandKey];
@@ -174,14 +174,12 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     }
   };
 
-
-
   const isBoolean = (value: unknown): boolean => {
     return typeof value === 'boolean';
-  }
+  };
   const normalizeFlags = (
     layer: AwWindowLayer,
-    inputFlags: Partial<AwWindowFlags>,
+    inputFlags: Partial<AwWindowFlags>
   ): AwWindowFlags => {
     const defaultBlocking = layer === 'modal' || layer === 'system';
 
@@ -193,7 +191,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       maximizable: inputFlags.maximizable ?? true,
       closeOnEsc: inputFlags.closeOnEsc,
       closeOnBackdrop: inputFlags.closeOnBackdrop,
-      isBlockingWindow: inputFlags.isBlockingWindow ?? defaultBlocking,
+      isBlockingWindow: inputFlags.isBlockingWindow ?? defaultBlocking
     };
 
     //    console.log('flags are:',flags);
@@ -207,7 +205,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       x: input.rect?.x ?? AW_DEFAULT_RECT.x,
       y: input.rect?.y ?? AW_DEFAULT_RECT.y,
       w: input.rect?.w ?? AW_DEFAULT_RECT.w,
-      h: input.rect?.h ?? AW_DEFAULT_RECT.h,
+      h: input.rect?.h ?? AW_DEFAULT_RECT.h
     };
 
     const layer: AwWindowLayer = input.layer ?? 'normal';
@@ -219,7 +217,6 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       ...normalizedFlags
     };
 
-
     const win: AwWindowModel = {
       id,
       title: input.title,
@@ -230,7 +227,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       layer,
       flags: mergedFlags,
       props: input.props ?? {},
-      meta: input.meta,
+      meta: input.meta
     };
 
     const band = getBand(layer);
@@ -254,7 +251,6 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     return removed.length === 1;
   };
 
-
   const getTopmostOverall = (): AwWindowModel | null => {
     const all = getAllWindows();
     if (all.length === 0) {
@@ -272,14 +268,16 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       return;
     }
 
-
     const snapshot: AwWindowModel = {
       ...win,
       rect: { ...win.rect },
       prevRect: win.prevRect ? { ...win.prevRect } : undefined,
       flags: { ...win.flags },
       props: win.props ? { ...win.props } : undefined,
-      meta: typeof win.meta === 'object' && win.meta !== null ? { ...(win.meta as Record<string, unknown>) } : win.meta
+      meta:
+        typeof win.meta === 'object' && win.meta !== null
+          ? { ...(win.meta as Record<string, unknown>) }
+          : win.meta
     };
 
     try {
@@ -310,13 +308,12 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     void closeWindowAsync(id);
   };
 
-
   const moveWindow = (id: AwWindowId, rect: AwWindowRect): void => {
     const win = getWindowById(id);
     if (!win) {
       return;
     }
-    setWindowRect(id,rect);
+    setWindowRect(id, rect);
     if (hooks.onWindowMove) {
       hooks.onWindowMove(win);
     }
@@ -358,10 +355,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     }
   };
 
-  const setWindowRect = (
-    id: AwWindowId,
-    rect: AwWindowRect,
-  ): void => {
+  const setWindowRect = (id: AwWindowId, rect: AwWindowRect): void => {
     const win = getWindowById(id);
     if (!win) {
       return;
@@ -410,8 +404,8 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       windows: all.map((win) => ({
         ...win,
         rect: { ...win.rect },
-        prevRect: win.prevRect ? { ...win.prevRect } : undefined,
-      })),
+        prevRect: win.prevRect ? { ...win.prevRect } : undefined
+      }))
     };
   };
 
@@ -485,7 +479,6 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       hooks.onWindowActivated(win);
     }
   };
-
 
   return {
     openWindow,
