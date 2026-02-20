@@ -26,6 +26,9 @@
       <template #titlebar-right="slotProps">
         <slot name="titlebar-right" v-bind="slotProps" />
       </template>
+      <template #status-area="slotProps">
+        <slot v-if="options.showStatusArea" name="status-area" v-bind="slotProps" />
+      </template>
     </WindowShell>
     <WindowShell
       v-for="(win, index) in utilityWindows"
@@ -42,7 +45,11 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-    />
+    >
+      <template #titlebar-right="slotProps">
+        <slot name="titlebar-right" v-bind="slotProps" />
+      </template>
+    </WindowShell>
     <WindowShell
       v-for="(win, index) in overlayWindows"
       :key="win.id"
@@ -58,7 +65,12 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-    />
+    >
+      <template #titlebar-right="slotProps">
+        <slot name="titlebar-right" v-bind="slotProps" />
+      </template>
+
+    </WindowShell>
 
     <div
       v-if="modalBackdropVisible"
@@ -81,7 +93,12 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-    />
+    >
+      <template #titlebar-right="slotProps">
+        <slot name="titlebar-right" v-bind="slotProps" />
+      </template>
+
+    </WindowShell>
 
     <div
       v-if="systemBackdropVisible"
@@ -104,7 +121,11 @@
       @minimize="onMinimize"
       @maximize="onMaximize"
       @guides="onGuides"
-    />
+    >
+      <template #titlebar-right="slotProps">
+        <slot name="titlebar-right" v-bind="slotProps" />
+      </template>
+    </WindowShell>
 
     <div
       v-if="showGuideX"
@@ -293,6 +314,38 @@ const getSnapTargets = (id: AwWindowId): AwWindowRect[] => {
     .map((candidate) => getVisibleRect(candidate));
 };
 
+const initializedMaximizedIds = new Set<AwWindowId>();
+
+const syncInitialMaximizedWindows = (): void => {
+  const currentIds = new Set(windows.value.map((win) => win.id));
+  for (const id of initializedMaximizedIds) {
+    if (!currentIds.has(id)) {
+      initializedMaximizedIds.delete(id);
+    }
+  }
+
+  for (const win of windows.value) {
+    if (win.state !== 'maximized') {
+      continue;
+    }
+    if (win.prevRect) {
+      continue;
+    }
+    if (initializedMaximizedIds.has(win.id)) {
+      continue;
+    }
+
+    const bounds = getBounds();
+    if (bounds.w <= 0 || bounds.h <= 0) {
+      continue;
+    }
+
+    initializedMaximizedIds.add(win.id);
+    props.windowManager.toggleMaximize(win.id, bounds);
+    props.windowManager.toggleMaximize(win.id, bounds);
+  }
+};
+
 // -------------------------
 // Keyboard routing
 // -------------------------
@@ -466,6 +519,7 @@ onMounted((): void => {
   //console.log('options:',props.options);
   window.addEventListener('keydown', onHostKeyEvent, { capture: true });
   window.addEventListener('keyup', onHostKeyEvent, { capture: true });
+  syncInitialMaximizedWindows();
 });
 
 onBeforeUnmount((): void => {
@@ -479,6 +533,14 @@ watch(
     props.windowManager.focusWindow(id);
   },
   { immediate: true, deep: true }
+);
+
+watch(
+  windows,
+  () => {
+    syncInitialMaximizedWindows();
+  },
+  { deep: true, flush: 'post' }
 );
 
 watch(

@@ -139,3 +139,18 @@ test("layer start index reflects the number of windows in lower layers", () => {
   assert.equal(manager.getLayerStartIndex("modal"), 4);
   assert.equal(manager.getLayerStartIndex("system"), 4);
 });
+
+test("openWindow accepts caller-defined initial state", () => {
+  const manager = awCreateWindowManager({});
+  const id = manager.openWindow({
+    title: "Max on open",
+    component: componentStub,
+    state: "maximized",
+    rect: { x: 0, y: 0, w: 1280, h: 720 },
+  });
+
+  const win = manager.getWindowById(id);
+  assert.ok(win);
+  assert.equal(win.state, "maximized");
+  assert.deepEqual(win.rect, { x: 0, y: 0, w: 1280, h: 720 });
+});

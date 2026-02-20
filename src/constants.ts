@@ -19,7 +19,8 @@ export const AW_DEFAULT_OPTIONS: AwOptions = {
   snapToWindows: false,
   locked: false,
   minWidth: 320,
-  minHeight: 240
+  minHeight: 240,
+  showStatusArea: false
 };
 
 export const AW_DEFAULT_FLAGS: AwWindowFlags = {

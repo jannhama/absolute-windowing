@@ -5,7 +5,8 @@
     :class="{
       'is-active': isFocused,
       'is-minimized': win.state === 'minimized',
-      'hide-title-bar': !options.showTitleBar
+      'hide-title-bar': !options.showTitleBar,
+      'has-status-area': hasStatusArea
     }"
     :style="windowStyle"
     @pointerdown="onActivate"
@@ -51,7 +52,7 @@
       </div>
     </div>
 
-    <div v-if="win.state === 'open' || win.state === 'maximized'" class="aw-wm-content">
+    <div v-if="winCanRenderContent" class="aw-wm-content">
       <component
         :is="win.component"
         v-bind="{
@@ -62,6 +63,11 @@
         }"
       />
     </div>
+
+    <div v-if="hasStatusArea" class="aw-wm-status-area">
+      <slot name="status-area" :win="win" :is-focused="isFocused" :options="options" />
+    </div>
+
     <ResizeHandles
       v-if="win.flags.resizable && win.state === 'open'"
       @resize-start="onResizeStart"
@@ -70,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, ref } from 'vue';
+import { computed, shallowRef, ref, useSlots } from 'vue';
 import ResizeHandles from './ResizeHandles.vue';
 import { AwBounds, AwDragSession, AwResizeDirection, AwDragMode } from '../internal/types';
 import { AwOptions, AwWindowId, AwWindowModel, AwWindowRect } from '../types';
@@ -94,6 +100,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const slots = useSlots();
 const emit = defineEmits<{
   (e: 'activate', id: AwWindowId): void;
   (e: 'move', payload: { id: AwWindowId; rect: AwWindowRect; bounds: AwBounds }): void;
@@ -118,6 +125,29 @@ const titleBarHeightPx = computed(() => {
 });
 
 const session = shallowRef<AwDragSession | null>(null);
+
+const winCanRenderContent = computed(() => {
+  return props.win.state === 'open' || props.win.state === 'maximized';
+});
+
+const hasStatusArea = computed(() => {
+  if (!winCanRenderContent.value) {
+    return false;
+  }
+
+  const statusSlot = slots['status-area'];
+  if (!statusSlot) {
+    return false;
+  }
+
+  const content = statusSlot({
+    win: props.win,
+    isFocused: props.isFocused,
+    options: props.options
+  });
+
+  return content.length > 0;
+});
 
 const windowStyle = computed<Record<string, string>>(() => {
   const { x, y, w, h } = props.win.rect;
