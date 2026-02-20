@@ -19,8 +19,16 @@
     touch-action: none;
 }
 
+.aw-wm-window.has-status-area {
+    grid-template-rows: var(--aw-wm-titlebar-h) 1fr auto;
+}
+
 .hide-title-bar {
     grid-template-rows: 1fr;
+}
+
+.hide-title-bar.has-status-area {
+    grid-template-rows: 1fr auto;
 }
 .aw-wm-window.is-active {
     border-color: var(--aw-wm-border-active);
@@ -107,4 +115,10 @@
     overflow: auto;
     padding: var(--aw-wm-content-padding);
     margin: 0;
+}
+
+.aw-wm-status-area {
+    width: 100%;
+    min-width: 0;
+    border-top: var(--aw-wm-titlebar-border-bottom);
 }

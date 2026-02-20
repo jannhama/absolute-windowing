@@ -1,8 +1,17 @@
 {
   "name": "absolute-windowing",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vue 3 windowing framework",
   "license": "MIT",
+  "keywords": [
+    "windowing",
+    "window manager",
+    "javascript",
+    "typescript",
+    "vue",
+    "vue 3",
+    "front-end"
+  ],
   "repository": "https://github.com/jannhama/absolute-windowing",
   "type": "module",
   "exports": {
@@ -35,14 +44,14 @@
     "lint": "eslint . --fix --cache"
   },
   "devDependencies": {
-    "@typescript-eslint/parser": "^8.54.0",
-    "@vitejs/plugin-vue": "^6.0.3",
-    "eslint": "^9.39.2",
-    "eslint-plugin-vue": "~10.6.2",
+    "@typescript-eslint/parser": "^8.56.0",
+    "@vitejs/plugin-vue": "^6.0.4",
+    "eslint": "^10.0.0",
+    "eslint-plugin-vue": "~10.8.0",
     "jiti": "^2.6.1",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
-    "vite": "^7.3.0",
-    "vue-tsc": "^3.2.1"
+    "vite": "^7.3.1",
+    "vue-tsc": "^3.2.4"
   }
 }

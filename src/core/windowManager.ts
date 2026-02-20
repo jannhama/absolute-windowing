@@ -8,7 +8,8 @@ import type {
   AwWindowManager,
   AwWindowManagerHooks,
   AwWindowModel,
-  AwWindowRect
+  AwWindowRect,
+  AwWindowState
 } from '../types';
 import { AW_DEFAULT_FLAGS, AW_DEFAULT_RECT } from '../constants';
 import { clamp, genId } from '../internal/utils';
@@ -200,6 +201,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
 
   const openWindow = (input: AwCreateWindowInput): AwWindowId => {
     const id = genId();
+    const initialState: AwWindowState = input.state ?? 'open';
 
     const rect: AwWindowRect = {
       x: input.rect?.x ?? AW_DEFAULT_RECT.x,
@@ -221,7 +223,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
       id,
       title: input.title,
       component: markRaw(input.component),
-      state: 'open',
+      state: initialState,
       rect,
       prevRect: undefined,
       layer,

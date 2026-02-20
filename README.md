@@ -133,12 +133,30 @@ Core methods:
 - `windowManager: AwWindowManager` (required)
 - `options?: Partial<AwOptions>`
 
-`WindowHost` also exposes a `titlebar-right` slot from each `WindowShell` instance:
+`WindowHost` also exposes scoped slots from each `WindowShell` instance:
+
+- `titlebar-right`: rendered in the right side of the title bar (before window control buttons)
+- `status-area`: rendered as a full-width area at the bottom of the window shell
+
+Both slots receive the same scope:
+
+- `win: AwWindowModel`
+- `isFocused: boolean`
+- `options: AwOptions`
+
+`status-area` is not rendered when the slot is missing or returns no content.
+`status-area` is available only for `normal` layer windows.
+`status-area` can be enabled/disabled dynamically through host options (`options.showStatusArea`).
 
 ```vue
 <WindowHost :window-manager="manager">
-  <template #titlebar-right="{ win }">
+  <template #titlebar-right="{ win, isFocused }">
     <button @click="pin(win.id)">Pin</button>
+    <span v-if="isFocused">Focused</span>
+  </template>
+
+  <template #status-area="{ win }">
+    <div class="window-status">ID: {{ win.id }}</div>
   </template>
 </WindowHost>
 ```
@@ -167,6 +185,12 @@ Defaults:
 - `isBlockingWindow` defaults to `true` for `modal` and `system`, otherwise `false`
 - other behavior defaults are in `AW_DEFAULT_FLAGS`
 
+## Window State
+
+- `AwWindowState`: `open | minimized | maximized`
+- `openWindow(input)` accepts optional `state`
+- Use `state: 'maximized'` to open directly in maximized mode
+
 ## Host Options (`AwOptions`)
 
 Default values:
@@ -179,6 +203,7 @@ Default values:
   showGuides: false,
   showTitleBar: true,
   showWindowControls: true,
+  showStatusArea: false,
   windowSnapOffset: 8,
   edgeSnapOffset: 8,
   snapToGrid: false,

@@ -41,6 +41,7 @@ export interface AwWindowModel {
 export interface AwCreateWindowInput {
   title: string;
   component: AwVueComponent;
+  state?: AwWindowState;
   rect?: Partial<AwWindowRect>;
   flags?: Partial<AwWindowFlags>;
   layer?: AwWindowLayer;
@@ -95,6 +96,8 @@ export interface AwOptions {
   locked: boolean;
   minWidth: number;
   minHeight: number;
+  showStatusArea: boolean;
+
 }
 
 export type AwWindowKeyHandler = (event: KeyboardEvent) => boolean;
