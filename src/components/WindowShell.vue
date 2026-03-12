@@ -2,6 +2,7 @@
   <div
     ref="shellEl"
     class="aw-wm-window"
+    :data-aw-window-id="String(win.id)"
     :class="{
       'is-active': isFocused,
       'is-minimized': win.state === 'minimized',

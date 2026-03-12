@@ -363,7 +363,100 @@ const isTextInputTarget = (target: EventTarget | null): boolean => {
     return false;
   }
 
-  if (target.closest('input, textarea, select, [contenteditable="true"]')) {
+  if (target.closest('button, input, textarea, select, [contenteditable="true"]')) {
+    return true;
+  }
+
+  return false;
+};
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'area[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  'iframe',
+  'object',
+  'embed',
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])'
+].join(', ');
+
+const getWindowShellElement = (id: AwWindowId): HTMLElement | null => {
+  const host = hostEl.value;
+  if (!host) {
+    return null;
+  }
+
+  const candidates = host.querySelectorAll<HTMLElement>('.aw-wm-window');
+  const idAsText = String(id);
+  for (const el of candidates) {
+    if (el.dataset.awWindowId === idAsText) {
+      return el;
+    }
+  }
+
+  return null;
+};
+
+const getFocusableElements = (container: HTMLElement): HTMLElement[] => {
+  const nodes = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+  return Array.from(nodes).filter((el) => {
+    if (el.getAttribute('aria-hidden') === 'true') {
+      return false;
+    }
+    return el.getClientRects().length > 0;
+  });
+};
+
+const trapTabInsideWindow = (event: KeyboardEvent, win: AwWindowModel): boolean => {
+  if (event.type !== 'keydown' || event.key !== 'Tab') {
+    return false;
+  }
+
+  const shell = getWindowShellElement(win.id);
+  if (!shell) {
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+  }
+
+  const focusables = getFocusableElements(shell);
+  if (!focusables.length) {
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+  }
+
+  const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const activeInside = !!active && shell.contains(active);
+  if (!activeInside) {
+    event.preventDefault();
+    event.stopPropagation();
+    const target = event.shiftKey ? focusables.at(-1) : focusables[0];
+    target?.focus();
+    return true;
+  }
+
+  const first = focusables[0];
+  const last = focusables.at(-1) ?? first;
+  if (!active) {
+    return false;
+  }
+
+  if (!event.shiftKey && active === last) {
+    event.preventDefault();
+    event.stopPropagation();
+    first.focus();
+    return true;
+  }
+
+  if (event.shiftKey && active === first) {
+    event.preventDefault();
+    event.stopPropagation();
+    last.focus();
     return true;
   }
 
@@ -406,9 +499,7 @@ const onHostKeyEvent = (event: KeyboardEvent): void => {
   const system = systemWindows.value.at(-1) ?? null;
 
   if (blockingSystem) {
-    if (event.type === 'keydown' && event.key === 'Tab') {
-      event.preventDefault();
-      event.stopPropagation();
+    if (trapTabInsideWindow(event, blockingSystem)) {
       return;
     }
 
@@ -431,9 +522,7 @@ const onHostKeyEvent = (event: KeyboardEvent): void => {
   }
 
   if (modal) {
-    if (event.type === 'keydown' && event.key === 'Tab') {
-      event.preventDefault();
-      event.stopPropagation();
+    if (trapTabInsideWindow(event, modal)) {
       return;
     }
 
