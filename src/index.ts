@@ -8,6 +8,7 @@ export type {
   AwWindowFlags,
   AwWindowModel,
   AwCreateWindowInput,
+  AwUpdateWindowInput,
   AwWindowManager,
   AwWindowManagerHooks,
   AwOptions,

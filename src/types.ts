@@ -49,6 +49,15 @@ export interface AwCreateWindowInput {
   meta?: unknown;
 }
 
+export interface AwUpdateWindowInput {
+  title?: string;
+  flags?: Partial<AwWindowFlags>;
+  props?: Record<string, unknown>;
+  meta?: unknown;
+  onKeyDown?: AwWindowKeyHandler;
+  onKeyUp?: AwWindowKeyHandler;
+}
+
 export interface AwWindowManager {
   openWindow: (input: AwCreateWindowInput) => AwWindowId;
   closeWindow: (id: AwWindowId) => void;
@@ -56,6 +65,7 @@ export interface AwWindowManager {
   activateWindow: (id: AwWindowId) => void;
   moveWindow: (id: AwWindowId, rect: AwWindowRect) => void;
   resizeWindow: (id: AwWindowId, rect: AwWindowRect) => void;
+  updateWindow: (id: AwWindowId, patch: AwUpdateWindowInput) => void;
   toggleMinimize: (id: AwWindowId) => void;
   toggleMaximize: (id: AwWindowId, bounds: { w: number; h: number }) => void;
   getWindowById: (id: AwWindowId) => AwWindowModel | undefined;
@@ -68,7 +78,6 @@ export interface AwWindowManager {
   getTopmostOverall: () => AwWindowModel | null;
   hasModalWindows: () => boolean;
   focusWindow(id: AwWindowId | null): void;
-
 }
 
 export interface AwWindowManagerHooks {

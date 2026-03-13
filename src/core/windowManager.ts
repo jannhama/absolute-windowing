@@ -1,7 +1,9 @@
 // src/windowing/core/windowManager.ts
 import { markRaw, reactive } from 'vue';
+
 import type {
   AwCreateWindowInput,
+  AwUpdateWindowInput,
   AwWindowFlags,
   AwWindowId,
   AwWindowLayer,
@@ -12,7 +14,7 @@ import type {
   AwWindowState
 } from '../types';
 import { AW_DEFAULT_FLAGS, AW_DEFAULT_RECT } from '../constants';
-import { clamp, genId } from '../internal/utils';
+import { clamp, genId, hasOwn, shallowEqualFlags, shallowEqualRecord } from '../internal/utils';
 
 type Bands = {
   normal: AwWindowModel[];
@@ -332,6 +334,91 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     }
   };
 
+  const updateWindow = (id: AwWindowId, patch: AwUpdateWindowInput): void => {
+    const location = findWindowLocationById(id);
+
+    if (!location) {
+      return;
+    }
+
+    const currentWindow = location.win;
+
+    let nextTitle = currentWindow.title;
+    let nextFlags = currentWindow.flags;
+    let nextProps = currentWindow.props;
+    let nextMeta = currentWindow.meta;
+    let nextOnKeyDown = currentWindow.onKeyDown;
+    let nextOnKeyUp = currentWindow.onKeyUp;
+
+    let didChange = false;
+
+    if (hasOwn(patch, 'title') && patch.title !== currentWindow.title) {
+      nextTitle = patch.title as string;
+      didChange = true;
+    }
+
+    if (patch.flags) {
+      const mergedFlags: AwWindowFlags = {
+        ...currentWindow.flags,
+        ...patch.flags
+      };
+
+      if (!shallowEqualFlags(currentWindow.flags, mergedFlags)) {
+        nextFlags = mergedFlags;
+        didChange = true;
+      }
+    }
+
+    if (patch.props) {
+      const mergedProps: Record<string, unknown> = {
+        ...(currentWindow.props ?? {}),
+        ...patch.props
+      };
+
+      if (!shallowEqualRecord(currentWindow.props, mergedProps)) {
+        nextProps = mergedProps;
+        didChange = true;
+      }
+    }
+
+    if (hasOwn(patch, 'meta') && patch.meta !== currentWindow.meta) {
+      nextMeta = patch.meta;
+      didChange = true;
+    }
+
+    if (hasOwn(patch, 'onKeyDown') && patch.onKeyDown !== currentWindow.onKeyDown) {
+      nextOnKeyDown = patch.onKeyDown;
+      didChange = true;
+    }
+
+    if (hasOwn(patch, 'onKeyUp') && patch.onKeyUp !== currentWindow.onKeyUp) {
+      nextOnKeyUp = patch.onKeyUp;
+      didChange = true;
+    }
+
+    if (!didChange) {
+      return;
+    }
+
+    const nextWindow: AwWindowModel = {
+      ...currentWindow,
+      title: nextTitle,
+      flags: nextFlags,
+      props: nextProps,
+      meta: nextMeta,
+      onKeyDown: nextOnKeyDown,
+      onKeyUp: nextOnKeyUp
+    };
+
+    const nextBand = state.bands[location.bandKey].slice();
+    nextBand[location.index] = nextWindow;
+
+    state.bands = {
+      ...state.bands,
+      [location.bandKey]: nextBand
+    };
+  };
+
   const toggleMinimize = (id: AwWindowId): void => {
     const win = getWindowById(id);
     if (!win) {
@@ -489,6 +576,7 @@ export const awCreateWindowManager = (hooks: AwWindowManagerHooks): AwWindowMana
     activateWindow,
     moveWindow,
     resizeWindow,
+    updateWindow,
     toggleMinimize,
     toggleMaximize,
     getWindowById,

@@ -115,6 +115,7 @@ Core methods:
 - `activateWindow(id)`
 - `moveWindow(id, rect)`
 - `resizeWindow(id, rect)`
+- `updateWindow((id, patch)`
 - `toggleMinimize(id)`
 - `toggleMaximize(id, bounds)`
 - `getWindowById(id)`
@@ -190,6 +191,32 @@ Defaults:
 - `AwWindowState`: `open | minimized | maximized`
 - `openWindow(input)` accepts optional `state`
 - Use `state: 'maximized'` to open directly in maximized mode
+
+## Updating window properties in run-time (new in v0.2.2)
+
+It is now possible to update window during runtime. Sometimes there is need to update title or other parameters.
+This can be done using `updateWindow` function of the window manager. It takes window id and updated data as a parameter.
+
+interface definition:
+
+`updateWindow: (id: AwWindowId, patch: AwUpdateWindowInput) => void;`
+
+example use:
+
+```ts
+
+  windowManager.updateWindow(windowId, {
+    title: 'New Title'
+  });
+```
+or
+```ts
+  windowManager.updateWindow(windowId, {
+    flags: {
+      closable: false
+    }
+  });
+```
 
 ## Host Options (`AwOptions`)
 
